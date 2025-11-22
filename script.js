@@ -1,198 +1,277 @@
 // ----------------------------------------------------
-// YOUR GOOGLE APPS SCRIPT URL
+// PASTE YOUR UPDATED GOOGLE APPS SCRIPT URL HERE
 // ----------------------------------------------------
-const API_URL = "https://script.google.com/macros/s/AKfycbxe4e9qXtRv5caC_oMtcwZsdrkJc4oQ8aNrZWBvMAkOlFAtcLHUKyuhQ66uNLPz8wNE/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxe4e9qXtRv5caC_oMtcwZsdrkJc4oQ8aNrZWBvMAkOlFAtcLHUKyuhQ66uNLPz8wNE/exec";
 // ----------------------------------------------------
+
+let appData = {};
 
 document.addEventListener('DOMContentLoaded', () => {
-  showToast("Connecting to Database...");
-  fetchData();
+  // 1. Check for Cached View
+  const cachedView = localStorage.getItem('currentView') || 'home';
+  updateNavState(cachedView);
+  
+  showToast("Connecting...");
+  
+  // 2. Fetch Data
+  fetch(API_URL)
+    .then(res => res.json())
+    .then(data => {
+      if(data.status === 'success') {
+        appData = data;
+        showToast("Loaded!");
+        
+        renderFooter(data.contacts);
+        renderView(cachedView); // Render based on cache
+        
+        // Restore Scroll
+        const scroll = localStorage.getItem('scrollPos');
+        if(scroll) setTimeout(() => window.scrollTo(0, parseInt(scroll)), 50);
+      } else {
+        throw new Error(data.message);
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      showToast("Offline / Error");
+      document.getElementById('app-content').innerHTML = "<p style='text-align:center'>Unable to load content. Please check connection.</p>";
+    });
 });
 
-// --- FETCH DATA ---
-async function fetchData() {
-  try {
-    const response = await fetch(API_URL);
-    const data = await response.json();
+// Save scroll before leaving/refreshing
+window.addEventListener('beforeunload', () => {
+  localStorage.setItem('scrollPos', window.scrollY);
+});
 
-    // Check if API returned valid data
-    if (data.content || data.contacts) {
-      showToast("Data Loaded Successfully!");
-      renderApp(data.content || [], data.contacts || []);
-    } else {
-      throw new Error("Invalid Data Structure");
-    }
-  } catch (error) {
-    console.error(error);
-    showToast("Offline Mode / Connection Error");
-    // Render Backup Logic
-    renderApp(
-      [{title: "Offline", desc: "Content unavailable offline.", url: "", type: "Image", ref: ""}], 
-      [{title: "System", desc: "No connection", link: ""}]
-    );
-  }
+// --- NAVIGATION ---
+window.switchView = function(viewName) {
+  localStorage.setItem('currentView', viewName);
+  localStorage.setItem('scrollPos', 0); // Reset scroll on manual switch
+  updateNavState(viewName);
+  renderView(viewName);
+  window.scrollTo(0, 0);
 }
 
-// --- RENDER APP ---
-function renderApp(content, contacts) {
-  const grid = document.getElementById('grid-target');
-  const footer = document.getElementById('footer-target');
-  const heroWrap = document.getElementById('hero-wrap');
+function updateNavState(viewName) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if(viewName === 'home') document.getElementById('nav-home').classList.add('active');
+  if(viewName === 'members') document.getElementById('nav-team').classList.add('active');
+}
+
+function renderView(viewName) {
+  const container = document.getElementById('app-content');
+  container.innerHTML = ''; // Clear current
   
-  grid.innerHTML = '';
-  footer.innerHTML = '';
+  if(!appData.content) return; // Wait for data
 
-  let advocacyFound = false;
+  if(viewName === 'home') renderHome(container);
+  else renderTeam(container);
+}
 
-  content.forEach(item => {
-    const type = item.type ? item.type.toString().trim().toLowerCase() : 'image';
-    const processedMedia = getMediaHtml(item.url, type, false);
-    
-    // Data Object for Modal
-    const itemObj = {
-      t: item.title,
-      d: item.desc,
-      u: item.url,
-      ty: type,
-      r: item.ref
-    };
+// --- RENDERERS ---
 
-    // 1. ADVOCACY (HERO)
-    if (type === 'advocacy' && !advocacyFound) {
-      advocacyFound = true;
-      heroWrap.style.display = 'block';
-      document.getElementById('hero-title').innerText = item.title;
-      document.getElementById('hero-desc').innerText = item.desc;
-      // Auto-play allowed in hero (if browser permits)
-      document.getElementById('hero-vid').innerHTML = getMediaHtml(item.url, 'video', false);
-    } 
-    // 2. GRID ITEMS
-    else {
-      // Logic: Videos play inline. Images open modal.
-      let overlayHtml = '';
-      let clickAction = '';
-      
-      if (type === 'video') {
-        // Video: No overlay, user clicks play button on iframe
-        overlayHtml = '';
-      } else {
-        // Image: Overlay triggers modal
-        overlayHtml = `<div class="img-overlay"></div>`;
-      }
+function renderHome(container) {
+  let html = '';
+  
+  // Find Advocacy Video
+  const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
+  const cards = appData.content.filter(i => !i.type || i.type.toLowerCase() !== 'advocacy');
 
-      // Create Card Element
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
+  // Hero
+  if(videoItem) {
+    const vidUrl = getMediaHtml(videoItem.url, 'video', false);
+    html += `
+      <div class="hero-section">
+        <h2 class="hero-title">${videoItem.title}</h2>
+        <div class="hero-desc">${videoItem.desc}</div>
+        <div class="hero-video">${vidUrl}</div>
+      </div>
+      <div class="section-bar"></div>
+      <h2 class="section-title">Awareness Materials</h2>
+    `;
+  }
+
+  // Grid
+  html += `<div class="grid">`;
+  cards.forEach(item => {
+    const type = item.type ? item.type.toLowerCase() : 'image';
+    const media = getMediaHtml(item.url, type, false);
+    const overlay = type !== 'video' ? `<div class="img-overlay"></div>` : '';
+    // Encode data
+    const itemData = encodeData(item);
+
+    html += `
+      <div class="card">
         <div class="card-media">
-          ${processedMedia}
-          ${overlayHtml}
+          ${media}
+          ${overlay}
         </div>
         <div class="card-content">
-          <h3 class="card-title">${item.title}</h3>
-          <p class="card-desc">${item.desc}</p>
-          <button class="btn-details">Read Details & Refs</button>
+          <h3 class="card-title" onclick='openModal(${itemData})'>${item.title}</h3>
+          <div class="card-desc">${item.desc}</div>
+          <button class="btn-details" onclick='openModal(${itemData})'>Read Details</button>
         </div>
-      `;
-
-      // Add Click Listeners to Text/Overlay/Button only (Not the Video iframe)
-      const clickTargets = card.querySelectorAll('.img-overlay, .card-title, .btn-details');
-      clickTargets.forEach(el => {
-        el.addEventListener('click', () => openModal(itemObj));
-      });
-
-      grid.appendChild(card);
-    }
+      </div>
+    `;
   });
+  html += `</div>`;
+  
+  container.innerHTML = html;
+  
+  // Re-attach clicks (simplified for innerHTML usage)
+  const overlays = container.querySelectorAll('.img-overlay');
+  overlays.forEach(el => {
+    el.onclick = function() {
+      // Find parent card and trigger button click logic equivalent
+      const btn = this.parentElement.nextElementSibling.querySelector('button');
+      btn.click();
+    };
+  });
+}
 
-  if (!advocacyFound) heroWrap.style.display = 'none';
+function renderTeam(container) {
+  let html = '';
+  
+  const instructor = appData.profiles.find(p => p.role.toLowerCase() === 'instructor');
+  const members = appData.profiles.filter(p => p.role.toLowerCase() !== 'instructor');
 
-  // 3. RENDER CONTACTS
-  if (contacts && contacts.length > 0) {
+  // Instructor
+  if(instructor) {
+    const iImg = getDriveImg(instructor.imgUrl);
+    const iData = encodeData(instructor);
+    html += `
+      <div class="instructor-card" onclick='openProfile(${iData})'>
+        <img src="${iImg}" class="inst-img">
+        <h3 class="inst-name">${instructor.name}</h3>
+        <div class="inst-role">${instructor.program}</div>
+        <p style="color:#666; font-size:0.9rem;">${instructor.shortDesc}</p>
+        <button class="btn-details" style="margin-top:10px;">View Profile</button>
+      </div>
+      <div class="section-bar"></div>
+      <h2 class="section-title">Our Team</h2>
+    `;
+  }
+
+  // Members Grid
+  html += `<div class="member-grid">`;
+  members.forEach(m => {
+    const mImg = getDriveImg(m.imgUrl);
+    const mData = encodeData(m);
+    html += `
+      <div class="member-card" onclick='openProfile(${mData})'>
+        <img src="${mImg}" class="mem-img">
+        <h3 class="mem-name">${m.name}</h3>
+        <div class="mem-program">${m.role}</div>
+        <button class="btn-details" style="margin-top:auto;">Profile</button>
+      </div>
+    `;
+  });
+  html += `</div>`;
+
+  container.innerHTML = html;
+}
+
+function renderFooter(contacts) {
+  const f = document.getElementById('footer-target');
+  let h = '';
+  if(contacts) {
     contacts.forEach(c => {
-      const linkHtml = c.link ? `<br><a href="${c.link}" target="_blank">Open Link</a>` : '';
-      footer.innerHTML += `
+      const link = c.link ? `<br><a href="${c.link}" target="_blank">Open Link</a>` : '';
+      h += `
         <div class="footer-col">
           <h4>${c.title}</h4>
           <p>${c.desc.replace(/\n/g, '<br>')}</p>
-          ${linkHtml}
-        </div>
-      `;
+          ${link}
+        </div>`;
     });
-  } else {
-    footer.innerHTML = "<p>No contacts found.</p>";
   }
+  f.innerHTML = h;
 }
 
-// --- MEDIA PROCESSOR ---
-function getMediaHtml(url, type, autoplay) {
-  if (!url) return '<img src="https://via.placeholder.com/600?text=No+Media" style="width:100%;height:100%;object-fit:cover">';
+// --- MODALS ---
+
+window.openModal = function(data) {
+  const m = document.getElementById('modal');
+  document.getElementById('m-title').innerText = data.title;
+  document.getElementById('m-desc').innerText = data.desc;
+  document.getElementById('m-media').innerHTML = getMediaHtml(data.url, data.type, true);
   
-  let finalUrl = url;
+  const refBox = document.getElementById('m-ref-box');
+  if(data.ref) {
+    refBox.style.display = 'block';
+    document.getElementById('m-ref-content').innerHTML = data.ref.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+  } else {
+    refBox.style.display = 'none';
+  }
+  
+  m.style.display = 'flex';
+  setTimeout(() => m.classList.add('active'), 10);
+}
+
+window.openProfile = function(data) {
+  const m = document.getElementById('profile-modal');
+  document.getElementById('p-name').innerText = data.name;
+  document.getElementById('p-role').innerText = data.role + (data.program ? " | " + data.program : "");
+  document.getElementById('p-bio').innerText = data.fullBio || data.shortDesc;
+  document.getElementById('p-img').src = getDriveImg(data.imgUrl);
+  
+  const fb = document.getElementById('p-fb');
+  if(data.fbLink) { fb.style.display = 'inline-block'; fb.href = data.fbLink; }
+  else { fb.style.display = 'none'; }
+  
+  m.style.display = 'flex';
+  setTimeout(() => m.classList.add('active'), 10);
+}
+
+// Close Logic
+document.querySelectorAll('.close-btn').forEach(btn => {
+  btn.onclick = function() {
+    const m = this.closest('.modal');
+    m.classList.remove('active');
+    setTimeout(() => {
+      m.style.display = 'none';
+      if(m.id === 'modal') document.getElementById('m-media').innerHTML = ''; // Stop video
+    }, 300);
+  }
+});
+
+// --- HELPERS ---
+
+function encodeData(obj) {
+  // Safe stringify for HTML attributes
+  return JSON.stringify(obj).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+}
+
+function getDriveImg(url) {
+  if(!url) return 'https://via.placeholder.com/150';
+  const match = url.match(/[-\w]{25,}/);
+  return match ? `https://drive.google.com/uc?export=view&id=${match[0]}` : url;
+}
+
+function getMediaHtml(url, type, autoplay) {
+  if (!url) return '';
+  type = type ? type.toLowerCase() : 'image';
   
   // YouTube
   if (url.includes("youtube") || url.includes("youtu.be")) {
     const id = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/))([^&?]*)/);
-    if (id && id[1]) {
-       finalUrl = `https://www.youtube.com/embed/${id[1]}?modestbranding=1&rel=0`;
-       if (autoplay) finalUrl += "&autoplay=1";
-       return `<iframe src="${finalUrl}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+    if(id) {
+       let src = `https://www.youtube.com/embed/${id[1]}?modestbranding=1&rel=0`;
+       if(autoplay) src += "&autoplay=1";
+       return `<iframe src="${src}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
     }
   }
-  
   // Drive Video
   if (type === 'video' || type === 'advocacy') {
     const match = url.match(/[-\w]{25,}/);
-    if (match) {
-       finalUrl = `https://drive.google.com/file/d/${match[0]}/preview`;
-       return `<iframe src="${finalUrl}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+    if(match) {
+       const src = `https://drive.google.com/file/d/${match[0]}/preview`;
+       return `<iframe src="${src}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
     }
   }
-
-  // Drive Image
-  const match = url.match(/[-\w]{25,}/);
-  if (match && url.includes("drive")) {
-     finalUrl = `https://drive.google.com/uc?export=view&id=${match[0]}`;
-  }
-  
-  // Regular Image
-  return `<img src="${finalUrl}" loading="lazy">`;
-}
-
-// --- MODAL LOGIC ---
-const modal = document.getElementById('modal');
-const mMedia = document.getElementById('m-media');
-const mTitle = document.getElementById('m-title');
-const mDesc = document.getElementById('m-desc');
-const mRefBox = document.getElementById('m-ref-box');
-const mRefContent = document.getElementById('m-ref-content');
-
-function openModal(data) {
-  mMedia.innerHTML = getMediaHtml(data.u, data.ty, true); // Autoplay in modal
-  mTitle.innerText = data.t;
-  mDesc.innerText = data.d;
-  
-  if (data.r && data.r.trim() !== "") {
-    mRefBox.style.display = 'block';
-    const linkedText = data.r.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="ref-link">$1</a>');
-    mRefContent.innerHTML = linkedText;
-  } else {
-    mRefBox.style.display = 'none';
-  }
-
-  modal.style.display = 'flex';
-  setTimeout(() => modal.classList.add('active'), 10);
-}
-
-document.getElementById('close-modal').addEventListener('click', closeModal);
-modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
-
-function closeModal() {
-  modal.classList.remove('active');
-  setTimeout(() => {
-    modal.style.display = 'none';
-    mMedia.innerHTML = ''; // Stop video playback
-  }, 300);
+  // Image
+  const imgUrl = getDriveImg(url);
+  return `<img src="${imgUrl}">`;
 }
 
 function showToast(msg) {
@@ -202,20 +281,15 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 4000);
 }
 
-// --- PWA INSTALL PROMPT ---
+// Install Prompt
 let deferredPrompt;
 const installBtn = document.getElementById('install-btn');
-
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  installBtn.style.display = 'flex';
+  installBtn.style.display = 'block';
 });
-
 installBtn.addEventListener('click', () => {
   installBtn.style.display = 'none';
   deferredPrompt.prompt();
-  deferredPrompt.userChoice.then((choiceResult) => {
-    deferredPrompt = null;
-  });
 });
