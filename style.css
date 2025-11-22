@@ -284,3 +284,30 @@ footer {
 .sk-box { background: linear-gradient(90deg, var(--bg) 25%, var(--border) 50%, var(--bg) 75%); background-size: 200% 100%; animation: pulse 1.5s infinite; border-radius: var(--radius); }
 .sk-card { height: 400px; width: 100%; }
 @keyframes pulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ... previous CSS ... */
+
+/* ACTIONABLE TOAST */
+.toast {
+  position: fixed; bottom: 30px; right: 30px;
+  background: #1f2937; color: white;
+  padding: 16px 24px; border-radius: 12px;
+  z-index: 9999;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  display: flex; align-items: center; gap: 15px;
+  transform: translateY(100px); opacity: 0;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  max-width: 90%; width: auto; font-size: 0.95rem;
+  border-left: 4px solid var(--accent);
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+
+.toast-btn {
+  background: var(--accent); color: #781d22;
+  border: none; padding: 6px 12px;
+  border-radius: 6px; font-weight: 700; font-size: 0.8rem;
+  cursor: pointer; text-transform: uppercase;
+  margin-left: auto; white-space: nowrap;
+}
+.toast-btn:hover { filter: brightness(1.1); }
