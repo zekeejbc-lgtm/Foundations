@@ -1,44 +1,36 @@
 // ----------------------------------------------------
-// YOUR GOOGLE APPS SCRIPT DEPLOYMENT URL
+// YOUR API URL
 // ----------------------------------------------------
 const API_URL = "https://script.google.com/macros/s/AKfycbxe4e9qXtRv5caC_oMtcwZsdrkJc4oQ8aNrZWBvMAkOlFAtcLHUKyuhQ66uNLPz8wNE/exec"; 
 // ----------------------------------------------------
 
 let appData = {};
-let currentDataHash = ""; // Used to detect changes in data
+let currentDataHash = ""; 
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Initialize Theme & Nav
   initTheme();
   const cachedView = localStorage.getItem('currentView') || 'home';
   updateNavState(cachedView);
   
   showToast("Connecting...");
   
-  // 2. Initial Data Fetch
   fetchData();
-
-  // 3. Start Background Polling (Checks for new data every 30 seconds)
   setInterval(checkForDataUpdates, 30000);
 });
 
-// Save scroll position
 window.addEventListener('beforeunload', () => localStorage.setItem('scrollPos', window.scrollY));
 
-// --- DATA FETCHING ---
+// --- FETCH ---
 async function fetchData() {
   try {
     const response = await fetch(API_URL);
     const data = await response.json();
 
     if(data.status === 'success') {
-      // Save hash for comparison
       currentDataHash = JSON.stringify(data);
-      
       appData = data;
       
-      // Only render if this is the first load (to avoid resetting view while reading)
-      const isInitial = document.getElementById('app-content').innerHTML.includes('Loading');
+      const isInitial = document.getElementById('app-content').innerHTML.includes('div');
       
       if(isInitial) {
         showToast("Loaded!");
@@ -52,37 +44,28 @@ async function fetchData() {
   } catch (err) {
     console.error(err);
     showToast("Offline Mode Active");
-    // Optional: Render backup if empty
     if(!appData.content) renderAppBackup();
   }
 }
 
-// --- BACKGROUND POLLING ---
+// --- POLLING ---
 async function checkForDataUpdates() {
   try {
     const response = await fetch(API_URL);
     const newData = await response.json();
-    
     if(newData.status === 'success') {
       const newHash = JSON.stringify(newData);
-      // If data differs from what we have currently
       if(newHash !== currentDataHash) {
-        showActionToast("New content available!", "Refresh", () => {
-          window.location.reload();
-        });
+        showActionToast("New content available!", "Refresh", () => window.location.reload());
       }
     }
-  } catch (e) { /* Silent fail if offline */ }
+  } catch (e) {}
 }
 
-// --- SERVICE WORKER UPDATE DETECTOR ---
+// --- SW UPDATES ---
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(reg => {
-    
-    // 1. Check if update is waiting immediately
     if (reg.waiting) showUpdateToast(reg.waiting);
-
-    // 2. Listen for new updates found
     reg.addEventListener('updatefound', () => {
       const newWorker = reg.installing;
       newWorker.addEventListener('statechange', () => {
@@ -93,7 +76,6 @@ if ('serviceWorker' in navigator) {
     });
   });
 
-  // 3. Reload when new SW takes over
   let refreshing;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
@@ -108,7 +90,7 @@ function showUpdateToast(worker) {
   });
 }
 
-// --- THEME LOGIC ---
+// --- THEME ---
 function initTheme() {
   const saved = localStorage.getItem('theme');
   if (saved) {
@@ -126,7 +108,7 @@ window.toggleTheme = function() {
   localStorage.setItem('theme', next);
 }
 
-// --- NAVIGATION ---
+// --- NAV ---
 window.switchView = function(viewName) {
   localStorage.setItem('currentView', viewName);
   localStorage.setItem('scrollPos', 0);
@@ -145,7 +127,6 @@ function renderView(viewName) {
   const container = document.getElementById('app-content');
   container.innerHTML = '';
   if(!appData.content) return;
-
   if(viewName === 'home') renderHome(container);
   else renderTeam(container);
 }
@@ -237,13 +218,18 @@ function renderFooter(contacts) {
   if(contacts) {
     contacts.forEach(c => {
       const link = c.link ? `<br><a href="${c.link}" target="_blank">Open Link</a>` : '';
-      h += `<div class="footer-col"><h4>${c.title}</h4><p>${c.desc.replace(/\n/g, '<br>')}</p>${link}</div>`;
+      h += `
+        <div class="footer-col">
+          <h4>${c.title}</h4>
+          <p>${c.desc.replace(/\n/g, '<br>')}</p>
+          ${link}
+        </div>`;
     });
   }
   f.innerHTML = h;
 }
 
-// --- UNIVERSAL MEDIA HANDLERS ---
+// --- MEDIA HANDLERS ---
 function getSmartImg(url) {
   if(!url) return 'https://via.placeholder.com/150?text=No+Img';
   const driveMatch = url.match(/[-\w]{25,}/);
@@ -282,11 +268,15 @@ window.openModal = function(data) {
   document.getElementById('m-title').innerText = data.title;
   document.getElementById('m-desc').innerText = data.desc;
   document.getElementById('m-media').innerHTML = getMediaHtml(data.url, data.type, true);
+  
   const refBox = document.getElementById('m-ref-box');
   if(data.ref) {
     refBox.style.display = 'block';
     document.getElementById('m-ref-content').innerHTML = data.ref.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="ref-link">$1</a>');
-  } else { refBox.style.display = 'none'; }
+  } else { 
+    refBox.style.display = 'none'; 
+  }
+  
   m.style.display = 'flex';
   setTimeout(() => m.classList.add('active'), 10);
 }
@@ -297,9 +287,15 @@ window.openProfile = function(data) {
   document.getElementById('p-role').innerText = data.role + (data.program ? " | " + data.program : "");
   document.getElementById('p-bio').innerText = data.fullBio || data.shortDesc;
   document.getElementById('p-img').src = getSmartImg(data.imgUrl);
+  
   const fb = document.getElementById('p-fb');
-  if(data.fbLink) { fb.style.display = 'inline-block'; fb.href = data.fbLink; }
-  else { fb.style.display = 'none'; }
+  if(data.fbLink) { 
+    fb.style.display = 'inline-block'; 
+    fb.href = data.fbLink; 
+  } else { 
+    fb.style.display = 'none'; 
+  }
+  
   m.style.display = 'flex';
   setTimeout(() => m.classList.add('active'), 10);
 }
@@ -315,17 +311,18 @@ document.querySelectorAll('.close-btn').forEach(btn => {
   }
 });
 
-// --- TOASTS ---
+// --- HELPERS ---
+function encodeData(obj) { return JSON.stringify(obj).replace(/'/g, "&apos;").replace(/"/g, "&quot;"); }
+
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.innerHTML = msg;
+  t.innerText = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 function showActionToast(msg, btnText, callback) {
   const t = document.getElementById('toast');
-  // Only show if not already showing an action
   if(t.innerHTML.includes('<button')) return;
   
   t.innerHTML = `
@@ -334,21 +331,18 @@ function showActionToast(msg, btnText, callback) {
   `;
   t.classList.add('show');
   
-  // We add stylings inline or via CSS class 'toast-btn' (from style.css)
   const btn = document.getElementById('toast-action');
-  btn.style.cssText = "background:var(--accent); color:#000; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;";
-  
   btn.onclick = () => {
     t.classList.remove('show');
     callback();
   };
 }
 
-// --- HELPERS ---
-function encodeData(obj) { return JSON.stringify(obj).replace(/'/g, "&apos;").replace(/"/g, "&quot;"); }
-function renderAppBackup() { renderApp([{title:"Offline", desc:"Check connection.", type:"Image"}], []); }
+function renderAppBackup() {
+  renderApp([{title:"Offline", desc:"Check connection.", type:"Image"}], []);
+}
 
-// --- PWA INSTALL ---
+// --- INSTALL ---
 let deferredPrompt;
 const installBtn = document.getElementById('install-btn');
 window.addEventListener('beforeinstallprompt', (e) => {
