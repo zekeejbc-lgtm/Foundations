@@ -1,4 +1,4 @@
-const CACHE_NAME = 'idd-usep-v1';
+const CACHE_NAME = 'idd-usep-v2'; // Increment this to force cache clear on next deploy
 const ASSETS = [
   '/',
   '/index.html',
@@ -9,15 +9,14 @@ const ASSETS = [
   '/icon-512.png'
 ];
 
-// Install: Cache Files
+// 1. Install
 self.addEventListener('install', event => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
 });
 
-// Activate: Clean Old Caches
+// 2. Activate (Clean old caches)
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
@@ -26,30 +25,34 @@ self.addEventListener('activate', event => {
       })
     ))
   );
-  return self.clients.claim();
+  self.clients.claim();
 });
 
-// Fetch: Network First (for API), Cache First (for Assets)
+// 3. Fetch (Network First for Data, Cache First for Assets)
 self.addEventListener('fetch', event => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // 1. Google Script API -> Network First (Get fresh data, fall back to cache)
   if (url.href.includes('script.google.com')) {
+    // API: Network First -> Fallback to Cache
     event.respondWith(
-      fetch(req)
-        .then(res => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(req, clone));
-          return res;
-        })
-        .catch(() => caches.match(req))
+      fetch(req).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then(c => c.put(req, clone));
+        return res;
+      }).catch(() => caches.match(req))
     );
-  } 
-  // 2. Static Files -> Cache First (Fast load, fall back to network)
-  else {
+  } else {
+    // Assets: Cache First -> Fallback to Network
     event.respondWith(
       caches.match(req).then(res => res || fetch(req))
     );
+  }
+});
+
+// 4. Listen for "Skip Waiting" message from frontend
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
