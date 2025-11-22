@@ -4,14 +4,14 @@
   --primary-hover: #5a1216;
   --accent: #fab005;   /* Gold */
   
-  --bg: #F9FAFB;
-  --card-bg: #FFFFFF;
+  --bg: #F3F4F6;       /* Light Grey Background */
+  --card-bg: #FFFFFF;  /* White Card Background */
   --text-main: #1F2937;
   --text-sub: #4B5563;
   --border: #e5e7eb;
   
-  --radius: 16px;
-  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  --radius: 20px;
+  --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
   --link-hover: #fab005;
 }
 
@@ -22,9 +22,9 @@
   --text-main: #f1f5f9;
   --text-sub: #94a3b8;
   --border: #334155;
-  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
   
-  --primary: #ef4444;  /* Bright Red */
+  --primary: #ef4444;  /* Bright Red for Dark Mode */
   --primary-hover: #b91c1c;
   --accent: #facc15;
   --link-hover: #ef4444;
@@ -50,16 +50,14 @@ body {
 /* HEADER */
 header {
   background: var(--card-bg);
-  padding: 15px 0; /* Padding handled by inner container */
+  padding: 15px 0;
   border-top: 5px solid #781d22;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   position: sticky; top: 0; z-index: 100;
 }
 
 .header-inner {
-  width: 90%;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 90%; max-width: 1200px; margin: 0 auto;
   display: flex; justify-content: space-between; align-items: center; gap: 20px;
 }
 
@@ -116,34 +114,21 @@ header {
 [data-theme="dark"] .sun-icon { display: none; }
 [data-theme="dark"] .moon-icon { display: block; }
 
-/* --- MAIN LAYOUT (The Invisible Card Holder) --- */
+/* --- LAYOUT --- */
 .container {
-  width: 90%; /* GUARANTEED GAP ON LEFT & RIGHT */
+  width: 90%; 
   max-width: 1200px; 
-  margin: 0 auto; /* Centers the container */
-  padding-top: 60px;    /* Gap from Header */
-  padding-bottom: 100px; /* Gap from Footer */
+  margin: 0 auto; 
+  padding-top: 60px;    
+  padding-bottom: 120px; /* Extra space at bottom */
   flex: 1;
 }
 
-/* HERO SECTION */
+/* HERO */
 .hero-section { 
-  width: 100%; 
-  max-width: 900px; 
-  margin: 0 auto 5rem; 
+  width: 100%; max-width: 900px; margin: 0 auto 5rem; 
   text-align: center; 
 }
-
-/* 1. Video */
-.hero-video {
-  width: 100%; aspect-ratio: 16/9; background: #000;
-  border-radius: var(--radius); border: 4px solid var(--card-bg);
-  box-shadow: var(--shadow); overflow: hidden;
-  margin-bottom: 2.5rem; /* Space below video */
-}
-.hero-video iframe { width: 100%; height: 100%; border: none; }
-
-/* 2. Title */
 .hero-title { 
   font-family: 'Cinzel', serif; color: var(--primary); 
   font-size: 2.2rem; margin-bottom: 1.5rem; font-weight: 800; 
@@ -151,24 +136,26 @@ header {
 }
 [data-theme="dark"] .hero-title { color: var(--accent); }
 
-/* 3. Description Card */
-.hero-desc-card {
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  padding: 2.5rem; /* Internal spacing */
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  text-align: left; /* Resets alignment for text block */
+.hero-video {
+  width: 100%; aspect-ratio: 16/9; background: #000;
+  border-radius: var(--radius); border: 4px solid var(--card-bg);
+  box-shadow: var(--shadow); overflow: hidden;
+  margin-bottom: 2rem;
 }
+.hero-video iframe { width: 100%; height: 100%; border: none; }
 
+.hero-desc-card {
+  background: var(--card-bg); border-radius: var(--radius);
+  padding: 2.5rem; box-shadow: var(--shadow);
+  border: 1px solid var(--border); text-align: left;
+}
 .hero-desc {
   font-size: 1.1rem; color: var(--text-main); line-height: 1.8;
-  text-align: justify; text-justify: inter-word;
-  margin: 0;
+  text-align: justify; text-justify: inter-word; margin: 0;
 }
 
 /* SECTION HEADER */
-.section-header { text-align: center; margin-bottom: 3rem; position: relative; }
+.section-header { text-align: center; margin-bottom: 2rem; position: relative; }
 .section-header::after {
   content: ''; display: block; width: 60px; height: 4px;
   background: var(--accent); margin: 15px auto 0; border-radius: 2px;
@@ -179,19 +166,35 @@ header {
 }
 [data-theme="dark"] .section-title { color: white; }
 
-/* GRID */
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 3rem; }
+/* --- NEW: GROUP CARD HOLDER --- */
+.group-card-holder {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 3rem; /* Inner spacing around the whole grid */
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  width: 100%;
+}
+
+/* GRID (Inside the Holder) */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2.5rem; }
+
+/* CARDS */
 .card {
-  background: var(--card-bg); border-radius: var(--radius);
-  overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border);
+  background: var(--bg); /* Slightly different BG to pop against holder */
+  border-radius: var(--radius);
+  overflow: hidden; 
+  border: 1px solid var(--border);
   display: flex; flex-direction: column; transition: transform 0.3s ease;
 }
-.card:hover { transform: translateY(-8px); border-color: var(--accent); }
+.card:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+
 .card-media { width: 100%; aspect-ratio: 16/9; background: #eee; position: relative; }
 .card-media img, .card-media iframe { width: 100%; height: 100%; object-fit: cover; display: block; }
 .img-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.05); cursor: pointer; transition: background 0.3s; }
 .card:hover .img-overlay { background: rgba(0,0,0,0); }
-.card-content { padding: 2rem; flex: 1; display: flex; flex-direction: column; }
+
+.card-content { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; }
 .card-title {
   color: var(--primary); font-weight: 700; font-size: 1.2rem; margin-bottom: 0.8rem; cursor: pointer;
 }
@@ -214,12 +217,12 @@ header {
 .instructor-card {
   background: var(--card-bg); border-radius: var(--radius); padding: 3rem; text-align: center;
   border: 2px solid var(--accent); box-shadow: var(--shadow);
-  max-width: 650px; margin: 0 auto 5rem; position: relative; overflow: hidden;
+  max-width: 700px; margin: 0 auto 5rem; position: relative; overflow: hidden;
 }
 .instructor-card::before {
   content: "Course Instructor"; position: absolute; top: 0; left: 0; width: 100%;
   background: var(--accent); color: #781d22; font-weight: 800; font-size: 0.8rem;
-  text-transform: uppercase; padding: 6px 0; letter-spacing: 1px;
+  text-transform: uppercase; padding: 8px 0; letter-spacing: 1px;
 }
 .inst-img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin: 25px auto 15px; border: 4px solid var(--bg); }
 .inst-name { font-size: 1.6rem; font-weight: 800; color: var(--primary); margin: 0; font-family: 'Cinzel', serif; }
@@ -228,13 +231,14 @@ header {
 
 .member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 2rem; }
 .member-card {
-  background: var(--card-bg); border-radius: var(--radius); padding: 2rem; text-align: center;
-  border: 1px solid var(--border); box-shadow: var(--shadow); cursor: pointer; transition: transform 0.3s;
+  background: var(--bg); /* Distinct from holder */
+  border-radius: var(--radius); padding: 2rem; text-align: center;
+  border: 1px solid var(--border); cursor: pointer; transition: transform 0.3s;
 }
-.member-card:hover { transform: translateY(-8px); border-color: var(--accent); }
+.member-card:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
 .mem-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 15px; border: 3px solid var(--border); }
 .mem-name { font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin: 0; }
-.mem-program { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 0.5rem; }
+.mem-program { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 0.5rem; }
 
 /* MODAL */
 .modal {
@@ -273,17 +277,14 @@ header {
 /* FOOTER */
 footer {
   background: #781d22; color: white; 
-  padding: 4rem 0; /* Vertical Padding */
-  margin-top: auto; border-top: 6px solid var(--accent);
+  padding: 4rem 0; margin-top: auto; border-top: 6px solid var(--accent);
 }
 [data-theme="dark"] footer { background: #0f172a; border-top-color: var(--primary); }
-
 .footer-grid { 
   width: 90%; max-width: 1200px; margin: 0 auto;
   display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
   gap: 3rem; align-items: start; 
 }
-
 .footer-col h4 { color: var(--accent); border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 8px; margin-bottom: 15px; font-family: 'Cinzel', serif; font-size: 1.1rem; min-height: 30px; }
 .footer-col p { font-size: 0.95rem; line-height: 1.6; margin-bottom: 10px; color: #e5e7eb; }
 .footer-col a { color: #fff; text-decoration: none; border-bottom: 1px dashed rgba(255,255,255,0.5); transition: all 0.3s ease; padding-bottom: 2px; }
@@ -307,4 +308,5 @@ footer {
   .brand { flex-direction: column; }
   .container { width: 92%; padding-top: 40px; padding-bottom: 80px; }
   .hero-desc-card { padding: 1.5rem; }
+  .group-card-holder { padding: 1.5rem; } /* Less padding on mobile */
 }
