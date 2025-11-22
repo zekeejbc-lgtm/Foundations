@@ -1,22 +1,15 @@
 // ----------------------------------------------------
-// PASTE YOUR UPDATED GOOGLE APPS SCRIPT URL HERE
-// ----------------------------------------------------
 const API_URL = "https://script.google.com/macros/s/AKfycbxe4e9qXtRv5caC_oMtcwZsdrkJc4oQ8aNrZWBvMAkOlFAtcLHUKyuhQ66uNLPz8wNE/exec"; 
 // ----------------------------------------------------
 
 let appData = {};
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. THEME INITIALIZATION (System -> Saved)
   initTheme();
-
-  // 2. NAV INITIALIZATION
   const cachedView = localStorage.getItem('currentView') || 'home';
   updateNavState(cachedView);
-  
   showToast("Connecting...");
   
-  // 3. FETCH DATA
   fetch(API_URL)
     .then(res => res.json())
     .then(data => {
@@ -25,14 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Loaded!");
         renderFooter(data.contacts);
         renderView(cachedView);
-        
         const scroll = localStorage.getItem('scrollPos');
         if(scroll) setTimeout(() => window.scrollTo(0, parseInt(scroll)), 50);
       } else { throw new Error(data.message); }
     })
     .catch(err => {
       console.error(err);
-      showToast("Connection Error / Offline");
+      showToast("Using Offline Data");
       renderAppBackup();
     });
 });
@@ -43,28 +35,24 @@ window.addEventListener('beforeunload', () => localStorage.setItem('scrollPos', 
 function initTheme() {
   const saved = localStorage.getItem('theme');
   if (saved) {
-    setTheme(saved);
+    document.documentElement.setAttribute('data-theme', saved);
   } else {
-    // Default to system
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(systemDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', systemDark ? 'dark' : 'light');
   }
 }
 
-function toggleTheme() {
+window.toggleTheme = function() {
   const current = document.documentElement.getAttribute('data-theme');
   const next = current === 'dark' ? 'light' : 'dark';
-  setTheme(next);
+  document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('theme', next);
 }
 
-function setTheme(mode) {
-  document.documentElement.setAttribute('data-theme', mode);
-  const icon = document.getElementById('theme-icon');
-  icon.innerText = mode === 'dark' ? '🌙' : '☀️';
-}
+// ... REST OF THE SCRIPT REMAINS THE SAME ...
+// (Make sure to keep switchView, renderView, renderHome, etc. from the previous answer)
+// Below is the standard nav logic for context:
 
-// --- NAVIGATION ---
 window.switchView = function(viewName) {
   localStorage.setItem('currentView', viewName);
   localStorage.setItem('scrollPos', 0);
@@ -83,12 +71,14 @@ function renderView(viewName) {
   const container = document.getElementById('app-content');
   container.innerHTML = '';
   if(!appData.content) return;
-
   if(viewName === 'home') renderHome(container);
   else renderTeam(container);
 }
 
-// --- RENDER HOME ---
+// --- KEEP THE REST OF THE RENDER FUNCTIONS FROM PREVIOUS CHAT ---
+// (renderHome, renderTeam, renderFooter, getMediaHtml, getSmartImg, etc.)
+// Just make sure getMediaHtml is present to fix the image links.
+
 function renderHome(container) {
   let html = '';
   const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
@@ -127,13 +117,11 @@ function renderHome(container) {
   html += `</div>`;
   container.innerHTML = html;
   
-  // Re-attach overlay click logic
   container.querySelectorAll('.img-overlay').forEach(el => {
     el.onclick = function() { this.parentElement.nextElementSibling.querySelector('button').click(); };
   });
 }
 
-// --- RENDER TEAM ---
 function renderTeam(container) {
   let html = '';
   const instructor = appData.profiles.find(p => p.role.toLowerCase() === 'instructor');
@@ -183,29 +171,19 @@ function renderFooter(contacts) {
   f.innerHTML = h;
 }
 
-// --- MEDIA HANDLERS (FIXED) ---
-
-// Handles any Image Link (Drive, FB, Web)
 function getSmartImg(url) {
   if(!url) return 'https://via.placeholder.com/150?text=No+Img';
-  
-  // If Google Drive Link
   const driveMatch = url.match(/[-\w]{25,}/);
   if (url.includes("drive.google.com") && driveMatch) {
     return `https://drive.google.com/uc?export=view&id=${driveMatch[0]}`;
   }
-  
-  // Else, return raw URL (works for FB, Imgur, etc)
   return url;
 }
 
-// Handles Video vs Image in Cards/Modal
 function getMediaHtml(url, type, autoplay) {
   if (!url) return '';
   type = type ? type.toLowerCase() : 'image';
-  
-  // 1. YOUTUBE
-  if (url.includes("youtube") || url.includes("youtu.be")) {
+  if (url.includes("youtube")) {
     const id = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/))([^&?]*)/);
     if(id) {
        let src = `https://www.youtube.com/embed/${id[1]}?modestbranding=1&rel=0`;
@@ -213,30 +191,23 @@ function getMediaHtml(url, type, autoplay) {
        return `<iframe src="${src}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
     }
   }
-  
-  // 2. GOOGLE DRIVE VIDEO
   if (type === 'video' || type === 'advocacy') {
     const match = url.match(/[-\w]{25,}/);
     if(match && url.includes("drive")) {
        return `<iframe src="https://drive.google.com/file/d/${match[0]}/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
     }
-    // 3. GENERIC VIDEO (mp4/webm)
     if(url.endsWith('.mp4') || url.endsWith('.webm')) {
        return `<video src="${url}" controls style="width:100%; height:100%"></video>`;
     }
   }
-  
-  // 4. DEFAULT IMAGE
   return `<img src="${getSmartImg(url)}">`;
 }
 
-// --- MODALS ---
 window.openModal = function(data) {
   const m = document.getElementById('modal');
   document.getElementById('m-title').innerText = data.title;
   document.getElementById('m-desc').innerText = data.desc;
   document.getElementById('m-media').innerHTML = getMediaHtml(data.url, data.type, true);
-  
   const refBox = document.getElementById('m-ref-box');
   if(data.ref) {
     refBox.style.display = 'block';
@@ -252,7 +223,6 @@ window.openProfile = function(data) {
   document.getElementById('p-role').innerText = data.role + (data.program ? " | " + data.program : "");
   document.getElementById('p-bio').innerText = data.fullBio || data.shortDesc;
   document.getElementById('p-img').src = getSmartImg(data.imgUrl);
-  
   const fb = document.getElementById('p-fb');
   if(data.fbLink) { fb.style.display = 'inline-block'; fb.href = data.fbLink; }
   else { fb.style.display = 'none'; }
