@@ -123,13 +123,12 @@ function renderView(viewName) {
   else renderTeam(container);
 }
 
-// --- RENDER HOME (FIXED ORDER) ---
+// --- RENDER HOME (STRICT ORDER: TITLE -> VIDEO -> DESC) ---
 function renderHome(container) {
   let html = '';
   const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
   const cards = appData.content.filter(i => !i.type || i.type.toLowerCase() !== 'advocacy');
 
-  // FIXED: TITLE -> VIDEO -> DESCRIPTION
   if(videoItem) {
     const vidHtml = getMediaHtml(videoItem.url, 'video', false);
     html += `
