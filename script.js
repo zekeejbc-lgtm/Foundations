@@ -1,6 +1,5 @@
 // ----------------------------------------------------
-// PASTE YOUR NEW DEPLOYMENT URL HERE
-// ----------------------------------------------------
+// 🔴 PASTE YOUR NEW GOOGLE SCRIPT URL HERE 🔴
 const API_URL = "https://script.google.com/macros/s/AKfycbxe4e9qXtRv5caC_oMtcwZsdrkJc4oQ8aNrZWBvMAkOlFAtcLHUKyuhQ66uNLPz8wNE/exec"; 
 // ----------------------------------------------------
 
@@ -12,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cachedView = localStorage.getItem('currentView') || 'home';
   updateNavState(cachedView);
   
+  console.log("Attempting to fetch data..."); // Debug Log
   showToast("Connecting...");
   
   fetchData();
@@ -23,17 +23,21 @@ window.addEventListener('beforeunload', () => localStorage.setItem('scrollPos', 
 // --- FETCH ---
 async function fetchData() {
   try {
-    const response = await fetch(API_URL);
+    // Add a timestamp to prevent browser caching of the API call
+    const response = await fetch(API_URL + "?t=" + new Date().getTime());
     
-    // Check if response is OK
-    if (!response.ok) throw new Error("Network response was not ok");
+    if (!response.ok) {
+      throw new Error(`HTTP Error! Status: ${response.status}`);
+    }
 
     const data = await response.json();
+    console.log("Data received:", data); // Debug Log
 
     if(data.status === 'success' || data.status === 'partial_error') {
       currentDataHash = JSON.stringify(data);
       appData = data;
       
+      // Check if we are still in loading state
       const isInitial = document.getElementById('app-content').innerHTML.includes('Loading');
       
       if(isInitial) {
@@ -48,17 +52,26 @@ async function fetchData() {
       throw new Error("API Error: " + data.message); 
     }
   } catch (err) {
-    console.error(err);
+    console.error("Fetch Failed:", err); // Debug Log
     showToast("Error: Content cannot load.");
     // If appData is empty, show backup
-    if(!appData.content) renderAppBackup();
+    if(!appData.content) {
+      document.getElementById('app-content').innerHTML = `
+        <div style="text-align:center; padding:2rem;">
+          <h3>Connection Failed</h3>
+          <p>Could not retrieve data from Google Sheets.</p>
+          <p style="color:red; font-size:0.8rem;">${err.message}</p>
+          <button onclick="window.location.reload()" class="nav-btn" style="background:#333; color:white; margin-top:10px;">Try Again</button>
+        </div>
+      `;
+    }
   }
 }
 
 // --- POLLING ---
 async function checkForDataUpdates() {
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch(API_URL + "?t=" + new Date().getTime());
     const newData = await response.json();
     if(newData.status === 'success') {
       const newHash = JSON.stringify(newData);
@@ -184,14 +197,13 @@ function renderHome(container) {
 function renderTeam(container) {
   let html = '';
   
-  // Safety check if profiles exist
   if (!appData.profiles || appData.profiles.length === 0) {
     container.innerHTML = "<p style='text-align:center; margin-top:2rem;'>No profiles found in database.</p>";
     return;
   }
 
-  const instructor = appData.profiles.find(p => p.role.toLowerCase() === 'instructor');
-  const members = appData.profiles.filter(p => p.role.toLowerCase() !== 'instructor');
+  const instructor = appData.profiles.find(p => p.role && p.role.toLowerCase() === 'instructor');
+  const members = appData.profiles.filter(p => !p.role || p.role.toLowerCase() !== 'instructor');
 
   if(instructor) {
     const iImg = getSmartImg(instructor.imgUrl);
