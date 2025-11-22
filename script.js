@@ -49,10 +49,7 @@ window.toggleTheme = function() {
   localStorage.setItem('theme', next);
 }
 
-// ... REST OF THE SCRIPT REMAINS THE SAME ...
-// (Make sure to keep switchView, renderView, renderHome, etc. from the previous answer)
-// Below is the standard nav logic for context:
-
+// --- NAV ---
 window.switchView = function(viewName) {
   localStorage.setItem('currentView', viewName);
   localStorage.setItem('scrollPos', 0);
@@ -75,10 +72,7 @@ function renderView(viewName) {
   else renderTeam(container);
 }
 
-// --- KEEP THE REST OF THE RENDER FUNCTIONS FROM PREVIOUS CHAT ---
-// (renderHome, renderTeam, renderFooter, getMediaHtml, getSmartImg, etc.)
-// Just make sure getMediaHtml is present to fix the image links.
-
+// --- RENDERERS ---
 function renderHome(container) {
   let html = '';
   const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
@@ -116,7 +110,6 @@ function renderHome(container) {
   });
   html += `</div>`;
   container.innerHTML = html;
-  
   container.querySelectorAll('.img-overlay').forEach(el => {
     el.onclick = function() { this.parentElement.nextElementSibling.querySelector('button').click(); };
   });
@@ -128,6 +121,7 @@ function renderTeam(container) {
   const members = appData.profiles.filter(p => p.role.toLowerCase() !== 'instructor');
 
   if(instructor) {
+    // CONFIRMED: Uses getSmartImg which handles any link type
     const iImg = getSmartImg(instructor.imgUrl);
     const iData = encodeData(instructor);
     html += `
@@ -144,6 +138,7 @@ function renderTeam(container) {
 
   html += `<div class="member-grid">`;
   members.forEach(m => {
+    // CONFIRMED: Uses getSmartImg here too
     const mImg = getSmartImg(m.imgUrl);
     const mData = encodeData(m);
     html += `
@@ -171,12 +166,16 @@ function renderFooter(contacts) {
   f.innerHTML = h;
 }
 
+// --- MEDIA HANDLERS (UNIVERSAL) ---
 function getSmartImg(url) {
   if(!url) return 'https://via.placeholder.com/150?text=No+Img';
+  // Check if it's a Google Drive Link
   const driveMatch = url.match(/[-\w]{25,}/);
   if (url.includes("drive.google.com") && driveMatch) {
+    // Convert to export view for direct embedding
     return `https://drive.google.com/uc?export=view&id=${driveMatch[0]}`;
   }
+  // Otherwise, return the link as-is (Facebook, Web, Imgur, etc.)
   return url;
 }
 
@@ -252,7 +251,6 @@ function renderAppBackup() {
   renderApp([{title:"Offline", desc:"Check connection.", type:"Image"}], []);
 }
 
-// PWA
 let deferredPrompt;
 const installBtn = document.getElementById('install-btn');
 window.addEventListener('beforeinstallprompt', (e) => {
