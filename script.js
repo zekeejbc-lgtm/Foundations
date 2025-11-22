@@ -1,20 +1,22 @@
 // ----------------------------------------------------
+// PASTE YOUR UPDATED GOOGLE APPS SCRIPT URL HERE
+// ----------------------------------------------------
 const API_URL = "https://script.google.com/macros/s/AKfycbxe4e9qXtRv5caC_oMtcwZsdrkJc4oQ8aNrZWBvMAkOlFAtcLHUKyuhQ66uNLPz8wNE/exec"; 
 // ----------------------------------------------------
 
 let appData = {};
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Restore Theme
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  applyTheme(savedTheme);
+  // 1. THEME INITIALIZATION (System -> Saved)
+  initTheme();
 
-  // Restore View
+  // 2. NAV INITIALIZATION
   const cachedView = localStorage.getItem('currentView') || 'home';
   updateNavState(cachedView);
   
   showToast("Connecting...");
   
+  // 3. FETCH DATA
   fetch(API_URL)
     .then(res => res.json())
     .then(data => {
@@ -30,26 +32,36 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(err => {
       console.error(err);
-      showToast("Using Offline Data");
-      // Basic Backup
-      renderApp([{title:"Offline", desc:"Check connection.", type:"Image"}], []);
+      showToast("Connection Error / Offline");
+      renderAppBackup();
     });
 });
 
 window.addEventListener('beforeunload', () => localStorage.setItem('scrollPos', window.scrollY));
 
 // --- THEME LOGIC ---
-window.toggleTheme = function() {
-  const current = document.documentElement.getAttribute('data-theme');
-  const newTheme = current === 'dark' ? 'light' : 'dark';
-  applyTheme(newTheme);
-  localStorage.setItem('theme', newTheme);
+function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved) {
+    setTheme(saved);
+  } else {
+    // Default to system
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(systemDark ? 'dark' : 'light');
+  }
 }
 
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  const btn = document.getElementById('theme-btn');
-  btn.innerText = theme === 'dark' ? '☀️' : '🌙';
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  setTheme(next);
+  localStorage.setItem('theme', next);
+}
+
+function setTheme(mode) {
+  document.documentElement.setAttribute('data-theme', mode);
+  const icon = document.getElementById('theme-icon');
+  icon.innerText = mode === 'dark' ? '🌙' : '☀️';
 }
 
 // --- NAVIGATION ---
@@ -76,23 +88,21 @@ function renderView(viewName) {
   else renderTeam(container);
 }
 
-// --- RENDERERS ---
-
+// --- RENDER HOME ---
 function renderHome(container) {
   let html = '';
   const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
   const cards = appData.content.filter(i => !i.type || i.type.toLowerCase() !== 'advocacy');
 
   if(videoItem) {
-    const vidUrl = getMediaHtml(videoItem.url, 'video', false);
+    const vidHtml = getMediaHtml(videoItem.url, 'video', false);
     html += `
       <div class="hero-section">
         <h2 class="hero-title">${videoItem.title}</h2>
         <div class="hero-desc">${videoItem.desc}</div>
-        <div class="hero-video">${vidUrl}</div>
+        <div class="hero-video">${vidHtml}</div>
       </div>
-      <div class="section-bar"></div>
-      <h2 class="section-title">Awareness Materials</h2>
+      <div class="section-header"><h2 class="section-title">Awareness Materials</h2></div>
     `;
   }
 
@@ -115,21 +125,22 @@ function renderHome(container) {
     `;
   });
   html += `</div>`;
-  
   container.innerHTML = html;
   
+  // Re-attach overlay click logic
   container.querySelectorAll('.img-overlay').forEach(el => {
     el.onclick = function() { this.parentElement.nextElementSibling.querySelector('button').click(); };
   });
 }
 
+// --- RENDER TEAM ---
 function renderTeam(container) {
   let html = '';
   const instructor = appData.profiles.find(p => p.role.toLowerCase() === 'instructor');
   const members = appData.profiles.filter(p => p.role.toLowerCase() !== 'instructor');
 
   if(instructor) {
-    const iImg = getDriveImg(instructor.imgUrl);
+    const iImg = getSmartImg(instructor.imgUrl);
     const iData = encodeData(instructor);
     html += `
       <div class="instructor-card" onclick='openProfile(${iData})'>
@@ -139,14 +150,13 @@ function renderTeam(container) {
         <p style="font-size:0.9rem; opacity:0.8;">${instructor.shortDesc}</p>
         <button class="btn-details" style="margin-top:10px;">View Profile</button>
       </div>
-      <div class="section-bar"></div>
-      <h2 class="section-title">Our Team</h2>
+      <div class="section-header"><h2 class="section-title">Our Team</h2></div>
     `;
   }
 
   html += `<div class="member-grid">`;
   members.forEach(m => {
-    const mImg = getDriveImg(m.imgUrl);
+    const mImg = getSmartImg(m.imgUrl);
     const mData = encodeData(m);
     html += `
       <div class="member-card" onclick='openProfile(${mData})'>
@@ -173,6 +183,53 @@ function renderFooter(contacts) {
   f.innerHTML = h;
 }
 
+// --- MEDIA HANDLERS (FIXED) ---
+
+// Handles any Image Link (Drive, FB, Web)
+function getSmartImg(url) {
+  if(!url) return 'https://via.placeholder.com/150?text=No+Img';
+  
+  // If Google Drive Link
+  const driveMatch = url.match(/[-\w]{25,}/);
+  if (url.includes("drive.google.com") && driveMatch) {
+    return `https://drive.google.com/uc?export=view&id=${driveMatch[0]}`;
+  }
+  
+  // Else, return raw URL (works for FB, Imgur, etc)
+  return url;
+}
+
+// Handles Video vs Image in Cards/Modal
+function getMediaHtml(url, type, autoplay) {
+  if (!url) return '';
+  type = type ? type.toLowerCase() : 'image';
+  
+  // 1. YOUTUBE
+  if (url.includes("youtube") || url.includes("youtu.be")) {
+    const id = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/))([^&?]*)/);
+    if(id) {
+       let src = `https://www.youtube.com/embed/${id[1]}?modestbranding=1&rel=0`;
+       if(autoplay) src += "&autoplay=1";
+       return `<iframe src="${src}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+    }
+  }
+  
+  // 2. GOOGLE DRIVE VIDEO
+  if (type === 'video' || type === 'advocacy') {
+    const match = url.match(/[-\w]{25,}/);
+    if(match && url.includes("drive")) {
+       return `<iframe src="https://drive.google.com/file/d/${match[0]}/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+    }
+    // 3. GENERIC VIDEO (mp4/webm)
+    if(url.endsWith('.mp4') || url.endsWith('.webm')) {
+       return `<video src="${url}" controls style="width:100%; height:100%"></video>`;
+    }
+  }
+  
+  // 4. DEFAULT IMAGE
+  return `<img src="${getSmartImg(url)}">`;
+}
+
 // --- MODALS ---
 window.openModal = function(data) {
   const m = document.getElementById('modal');
@@ -194,7 +251,7 @@ window.openProfile = function(data) {
   document.getElementById('p-name').innerText = data.name;
   document.getElementById('p-role').innerText = data.role + (data.program ? " | " + data.program : "");
   document.getElementById('p-bio').innerText = data.fullBio || data.shortDesc;
-  document.getElementById('p-img').src = getDriveImg(data.imgUrl);
+  document.getElementById('p-img').src = getSmartImg(data.imgUrl);
   
   const fb = document.getElementById('p-fb');
   if(data.fbLink) { fb.style.display = 'inline-block'; fb.href = data.fbLink; }
@@ -214,36 +271,17 @@ document.querySelectorAll('.close-btn').forEach(btn => {
   }
 });
 
-// --- HELPERS ---
 function encodeData(obj) { return JSON.stringify(obj).replace(/'/g, "&apos;").replace(/"/g, "&quot;"); }
-function getDriveImg(url) {
-  if(!url) return 'https://via.placeholder.com/150';
-  const match = url.match(/[-\w]{25,}/);
-  return match ? `https://drive.google.com/uc?export=view&id=${match[0]}` : url;
-}
-function getMediaHtml(url, type, autoplay) {
-  if (!url) return '';
-  type = type ? type.toLowerCase() : 'image';
-  if (url.includes("youtube")) {
-    const id = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/))([^&?]*)/);
-    if(id) {
-       let src = `https://www.youtube.com/embed/${id[1]}?modestbranding=1&rel=0`;
-       if(autoplay) src += "&autoplay=1";
-       return `<iframe src="${src}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-    }
-  }
-  if (type === 'video' || type === 'advocacy') {
-    const match = url.match(/[-\w]{25,}/);
-    if(match) return `<iframe src="https://drive.google.com/file/d/${match[0]}/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-  }
-  return `<img src="${getDriveImg(url)}">`;
-}
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.innerText = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 4000);
 }
+function renderAppBackup() {
+  renderApp([{title:"Offline", desc:"Check connection.", type:"Image"}], []);
+}
+
 // PWA
 let deferredPrompt;
 const installBtn = document.getElementById('install-btn');
