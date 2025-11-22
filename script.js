@@ -8,7 +8,6 @@ let appData = {};
 let currentDataHash = ""; 
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Initialize Theme & Nav
   initTheme();
   const cachedView = localStorage.getItem('currentView') || 'home';
   updateNavState(cachedView);
@@ -16,61 +15,37 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log("Attempting to fetch data...");
   showToast("Connecting...");
   
-  // 2. Start Fetch
   fetchData();
-
-  // 3. Start Polling
   setInterval(checkForDataUpdates, 30000);
 });
 
 window.addEventListener('beforeunload', () => localStorage.setItem('scrollPos', window.scrollY));
 
-// --- FETCH DATA ---
+// --- FETCH ---
 async function fetchData() {
   try {
-    // Add timestamp to prevent caching issues
     const response = await fetch(API_URL + "?t=" + new Date().getTime());
-    
-    if (!response.ok) {
-      throw new Error(`HTTP Error! Status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
     const data = await response.json();
-    console.log("Data received:", data); 
 
     if(data.status === 'success' || data.status === 'partial_error') {
       currentDataHash = JSON.stringify(data);
       appData = data;
       
-      // FIXED: Removed the 'if(isInitial)' check.
-      // We FORCE render immediately because we know data just arrived.
       showToast("Loaded Successfully!");
-      
-      // 1. Render Footer
       renderFooter(data.contacts);
-      
-      // 2. Render Main View (Home or Team)
       renderView(localStorage.getItem('currentView') || 'home');
       
-      // 3. Restore Scroll
       const scroll = localStorage.getItem('scrollPos');
       if(scroll) setTimeout(() => window.scrollTo(0, parseInt(scroll)), 50);
-
-    } else { 
-      throw new Error("API Error: " + data.message); 
-    }
+    } else { throw new Error("API Error: " + data.message); }
   } catch (err) {
     console.error("Fetch Failed:", err);
     showToast("Offline Mode Active");
-    
-    // Only show backup if we have absolutely nothing
-    if(!appData.content) {
-      renderAppBackup();
-    }
+    if(!appData.content) renderAppBackup();
   }
 }
 
-// --- POLLING ---
 async function checkForDataUpdates() {
   try {
     const response = await fetch(API_URL + "?t=" + new Date().getTime());
@@ -84,7 +59,6 @@ async function checkForDataUpdates() {
   } catch (e) {}
 }
 
-// --- SW UPDATES ---
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(reg => {
     if (reg.waiting) showUpdateToast(reg.waiting);
@@ -97,7 +71,6 @@ if ('serviceWorker' in navigator) {
       });
     });
   });
-
   let refreshing;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
@@ -112,7 +85,6 @@ function showUpdateToast(worker) {
   });
 }
 
-// --- THEME ---
 function initTheme() {
   const saved = localStorage.getItem('theme');
   if (saved) {
@@ -130,7 +102,6 @@ window.toggleTheme = function() {
   localStorage.setItem('theme', next);
 }
 
-// --- NAV ---
 window.switchView = function(viewName) {
   localStorage.setItem('currentView', viewName);
   localStorage.setItem('scrollPos', 0);
@@ -147,28 +118,25 @@ function updateNavState(viewName) {
 
 function renderView(viewName) {
   const container = document.getElementById('app-content');
-  // We don't clear innerHTML immediately here to prevent flashing white,
-  // renderHome/renderTeam will overwrite it.
-  
   if(!appData.content) return; 
-
   if(viewName === 'home') renderHome(container);
   else renderTeam(container);
 }
 
-// --- RENDERERS ---
+// --- RENDER HOME (FIXED ORDER) ---
 function renderHome(container) {
   let html = '';
   const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
   const cards = appData.content.filter(i => !i.type || i.type.toLowerCase() !== 'advocacy');
 
+  // FIXED: TITLE -> VIDEO -> DESCRIPTION
   if(videoItem) {
     const vidHtml = getMediaHtml(videoItem.url, 'video', false);
     html += `
       <div class="hero-section">
         <h2 class="hero-title">${videoItem.title}</h2>
-        <div class="hero-desc">${videoItem.desc}</div>
         <div class="hero-video">${vidHtml}</div>
+        <div class="hero-desc">${videoItem.desc}</div>
       </div>
       <div class="section-header"><h2 class="section-title">Awareness Materials</h2></div>
     `;
@@ -202,12 +170,10 @@ function renderHome(container) {
 
 function renderTeam(container) {
   let html = '';
-  
   if (!appData.profiles || appData.profiles.length === 0) {
-    container.innerHTML = "<div style='text-align:center; padding:2rem;'><h3>No Profiles Found</h3><p>Please check the Google Sheet 'Profiles' tab.</p></div>";
+    container.innerHTML = "<div style='text-align:center; padding:2rem;'><h3>No Profiles Found</h3></div>";
     return;
   }
-
   const instructor = appData.profiles.find(p => p.role && p.role.toLowerCase() === 'instructor');
   const members = appData.profiles.filter(p => !p.role || p.role.toLowerCase() !== 'instructor');
 
@@ -251,13 +217,10 @@ function renderFooter(contacts) {
       const link = c.link ? `<br><a href="${c.link}" target="_blank">Open Link</a>` : '';
       h += `<div class="footer-col"><h4>${c.title}</h4><p>${c.desc.replace(/\n/g, '<br>')}</p>${link}</div>`;
     });
-  } else {
-    h = "<p>No contacts loaded.</p>";
-  }
+  } else { h = "<p>No contacts loaded.</p>"; }
   f.innerHTML = h;
 }
 
-// --- MEDIA HANDLERS ---
 function getSmartImg(url) {
   if(!url) return 'https://via.placeholder.com/150?text=No+Img';
   const driveMatch = url.match(/[-\w]{25,}/);
@@ -290,7 +253,6 @@ function getMediaHtml(url, type, autoplay) {
   return `<img src="${getSmartImg(url)}">`;
 }
 
-// --- MODALS ---
 window.openModal = function(data) {
   const m = document.getElementById('modal');
   document.getElementById('m-title').innerText = data.title;
@@ -329,16 +291,13 @@ document.querySelectorAll('.close-btn').forEach(btn => {
   }
 });
 
-// --- HELPERS ---
 function encodeData(obj) { return JSON.stringify(obj).replace(/'/g, "&apos;").replace(/"/g, "&quot;"); }
-
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.innerText = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 4000);
 }
-
 function showActionToast(msg, btnText, callback) {
   const t = document.getElementById('toast');
   if(t.innerHTML.includes('<button')) return;
@@ -347,7 +306,6 @@ function showActionToast(msg, btnText, callback) {
   const btn = document.getElementById('toast-action');
   btn.onclick = () => { t.classList.remove('show'); callback(); };
 }
-
 function renderAppBackup() {
   const container = document.getElementById('app-content');
   container.innerHTML = `
@@ -359,7 +317,6 @@ function renderAppBackup() {
   `;
 }
 
-// --- INSTALL ---
 let deferredPrompt;
 const installBtn = document.getElementById('install-btn');
 window.addEventListener('beforeinstallprompt', (e) => {
