@@ -15,7 +15,6 @@
 </head>
 <body>
 
-  <!-- Toast -->
   <div id="toast" class="toast">Initializing...</div>
 
   <!-- Header -->
@@ -24,15 +23,17 @@
       <div class="brand">
         <img src="icon-192.png" alt="Logo">
         <div class="header-text">
-          <h1 class="school-name">USeP Tagum-Mabini</h1>
-          <p class="course-name">Special & Inclusive Education</p>
+          <h1 class="school-name">University of Southeastern Philippines</h1>
+          <p class="campus-name">Tagum-Mabini Campus, Tagum Unit</p>
+          <p class="course-name">Foundations of Special and Inclusive Education</p>
         </div>
       </div>
       
-      <!-- Navigation -->
+      <!-- Nav + Dark Mode Toggle -->
       <nav class="nav-group">
         <button id="nav-home" class="nav-btn active" onclick="switchView('home')">Home</button>
-        <button id="nav-team" class="nav-btn" onclick="switchView('members')">Our Team</button>
+        <button id="nav-team" class="nav-btn" onclick="switchView('members')">Team</button>
+        <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle Dark Mode">🌙</button>
       </nav>
     </div>
   </header>
@@ -42,21 +43,25 @@
     <span>⬇️</span> Install App
   </button>
 
-  <!-- MAIN DYNAMIC CONTENT -->
   <main id="app-content">
-    <div class="loading">Loading content...</div>
+    <div class="grid">
+      <div class="sk-box sk-card"></div>
+      <div class="sk-box sk-card"></div>
+    </div>
   </main>
 
   <!-- Footer -->
   <footer>
     <div class="footer-grid" id="footer-target"></div>
     <div class="copyright">
-      <div style="color: var(--accent); font-weight:800; margin-bottom:8px; letter-spacing:1px;">INTELLECTUAL AND DEVELOPMENTAL DISABILITY</div>
-      Group 1 - Bachelor of Secondary Education major in Filipino 1st Year 1SF students
+      <div style="color: var(--accent); font-weight:800; margin-bottom:8px; letter-spacing:1px; text-transform: uppercase;">
+        Intellectual and Developmental Disability
+      </div>
+      &copy; 2024 Bachelor of Secondary Education major in Filipino 1SF - Group 1
     </div>
   </footer>
 
-  <!-- CONTENT MODAL (For Articles/Images) -->
+  <!-- Modal -->
   <div id="modal" class="modal">
     <div class="modal-box">
       <button class="close-btn" id="close-modal">&times;</button>
@@ -72,23 +77,21 @@
     </div>
   </div>
 
-  <!-- PROFILE MODAL (For Team Members) -->
+  <!-- Profile Modal -->
   <div id="profile-modal" class="modal">
     <div class="modal-box profile-box">
       <button class="close-btn" id="close-profile">&times;</button>
-      <img id="p-img" class="modal-profile-img" src="">
+      <img id="p-img" class="inst-img" src="">
       <h2 id="p-name" class="p-name"></h2>
-      <p id="p-role" class="p-role"></p>
+      <p id="p-role" class="inst-role"></p>
       <div id="p-bio" class="modal-desc"></div>
-      <a id="p-fb" href="#" target="_blank" class="fb-btn">Visit Facebook Profile</a>
+      <a id="p-fb" href="#" target="_blank" class="btn-details" style="display:inline-block; margin-top:15px; text-decoration:none;">Visit Facebook</a>
     </div>
   </div>
 
   <script src="script.js"></script>
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
-    }
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
   </script>
 </body>
 </html>
