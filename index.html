@@ -11,7 +11,7 @@
   <meta name="theme-color" content="#781d22">
   <link rel="apple-touch-icon" href="icon-192.png">
 
-  <!-- Fonts: Cinzel, Inter, Tinos (Times New Roman Alternative) -->
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;600;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -35,12 +35,11 @@
         <button id="nav-home" class="nav-btn active" onclick="switchView('home')">Home</button>
         <button id="nav-team" class="nav-btn" onclick="switchView('members')">Team</button>
         
-        <!-- Theme Toggle -->
         <button class="theme-switch" onclick="toggleTheme()" aria-label="Toggle Theme">
           <div class="theme-switch-handle">
-            <!-- Sun -->
+            <!-- Sun Icon -->
             <svg class="icon-svg sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-            <!-- Moon -->
+            <!-- Moon Icon -->
             <svg class="icon-svg moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
           </div>
         </button>
@@ -48,12 +47,10 @@
     </div>
   </header>
 
-  <!-- Install Button -->
   <button id="install-btn" class="install-btn" style="display:none;">
     <span>⬇️</span> Install App
   </button>
 
-  <!-- Main Content -->
   <main id="app-content">
     <div class="grid">
       <div class="sk-box sk-card"></div>
@@ -61,7 +58,6 @@
     </div>
   </main>
 
-  <!-- Footer -->
   <footer>
     <div class="footer-grid" id="footer-target"></div>
     <div class="copyright">
@@ -100,6 +96,12 @@
         <a id="p-fb" href="#" target="_blank" class="btn-details" style="display:inline-block; margin-top:15px; text-decoration:none;">Visit Facebook</a>
       </div>
     </div>
+  </div>
+
+  <!-- FULL SCREEN IMAGE VIEWER -->
+  <div id="image-viewer" class="image-viewer" onclick="closeImageViewer()">
+    <img id="v-img" src="">
+    <div class="viewer-hint">Tap anywhere to close</div>
   </div>
 
   <script src="script.js"></script>
