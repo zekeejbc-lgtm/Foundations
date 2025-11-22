@@ -123,7 +123,7 @@ function renderView(viewName) {
   else renderTeam(container);
 }
 
-// --- RENDER HOME (STRICT ORDER: TITLE -> VIDEO -> DESC) ---
+// --- RENDER HOME (UPDATED WITH HERO CARD) ---
 function renderHome(container) {
   let html = '';
   const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
@@ -135,8 +135,13 @@ function renderHome(container) {
       <div class="hero-section">
         <h2 class="hero-title">${videoItem.title}</h2>
         <div class="hero-video">${vidHtml}</div>
-        <div class="hero-desc">${videoItem.desc}</div>
+        
+        <!-- NEW: Description inside a Card -->
+        <div class="hero-desc-card">
+          <div class="hero-desc">${videoItem.desc}</div>
+        </div>
       </div>
+      
       <div class="section-header"><h2 class="section-title">Awareness Materials</h2></div>
     `;
   }
@@ -324,3 +329,4 @@ window.addEventListener('beforeinstallprompt', (e) => {
 installBtn.addEventListener('click', () => {
   installBtn.style.display = 'none'; deferredPrompt.prompt();
 });
+
