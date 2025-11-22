@@ -5,16 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>IDD Awareness USeP</title>
   
-  <!-- FIXED: Tab Logo (Favicon) -->
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="shortcut icon" href="icon-192.png">
-  
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#781d22">
   <link rel="apple-touch-icon" href="icon-192.png">
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <!-- Fonts: Cinzel, Inter, Tinos (Better Times New Roman) -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;600;700&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -27,9 +25,20 @@
       <div class="brand">
         <img src="icon-192.png" alt="Logo">
         <div class="header-text">
-          <h1 class="school-name">USeP Tagum-Mabini</h1>
-          <p class="campus-name">Tagum-Mabini Campus, Tagum Unit</p>
-          <p class="course-name">Special & Inclusive Education</p>
+          <!-- School Name -->
+          <h1 class="school-name">
+            <span class="desktop-text">University of Southeastern Philippines</span>
+            <span class="mobile-text">USeP</span>
+          </h1>
+          
+          <!-- Campus Name -->
+          <p class="campus-name">
+            <span class="desktop-text">Tagum-Mabini Campus, Tagum Unit</span>
+            <span class="mobile-text">Tagum Unit</span>
+          </p>
+          
+          <!-- Course Name -->
+          <p class="course-name">Foundations of Special and Inclusive Education</p>
         </div>
       </div>
       
@@ -78,11 +87,10 @@
     </div>
   </footer>
 
- <!-- Modal -->
+  <!-- Modals (Same as before) -->
   <div id="modal" class="modal">
     <div class="modal-box">
       <button class="close-btn" id="close-modal">&times;</button>
-      <!-- Scrollable Content Wrapper -->
       <div class="modal-scroll-content">
         <div class="modal-media-area" id="m-media"></div>
         <div class="modal-body">
@@ -97,11 +105,9 @@
     </div>
   </div>
 
-  <!-- Profile Modal -->
   <div id="profile-modal" class="modal">
     <div class="modal-box profile-box">
       <button class="close-btn" id="close-profile">&times;</button>
-      <!-- Scrollable Content Wrapper -->
       <div class="modal-scroll-content" style="padding: 2.5rem; text-align: center;">
         <img id="p-img" class="inst-img" src="">
         <h2 id="p-name" class="p-name"></h2>
@@ -118,4 +124,3 @@
   </script>
 </body>
 </html>
-
