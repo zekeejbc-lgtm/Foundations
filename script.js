@@ -123,7 +123,7 @@ function renderView(viewName) {
   else renderTeam(container);
 }
 
-// --- RENDER HOME (ORDER: VIDEO -> TITLE -> CARD DESC) ---
+// --- RENDER HOME (Hero + Card Holder) ---
 function renderHome(container) {
   let html = '';
   const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
@@ -133,13 +133,8 @@ function renderHome(container) {
     const vidHtml = getMediaHtml(videoItem.url, 'video', false);
     html += `
       <div class="hero-section">
-        <!-- 1. VIDEO -->
         <div class="hero-video">${vidHtml}</div>
-        
-        <!-- 2. TITLE -->
         <h2 class="hero-title">${videoItem.title}</h2>
-        
-        <!-- 3. DESC CARD -->
         <div class="hero-desc-card">
           <div class="hero-desc">${videoItem.desc}</div>
         </div>
@@ -149,7 +144,8 @@ function renderHome(container) {
     `;
   }
 
-  html += `<div class="grid">`;
+  // WRAP GRID IN CARD HOLDER
+  html += `<div class="group-card-holder"><div class="grid">`;
   cards.forEach(item => {
     const type = item.type ? item.type.toLowerCase() : 'image';
     const media = getMediaHtml(item.url, type, false);
@@ -167,7 +163,8 @@ function renderHome(container) {
       </div>
     `;
   });
-  html += `</div>`;
+  html += `</div></div>`; // Close grid and holder
+  
   container.innerHTML = html;
   
   container.querySelectorAll('.img-overlay').forEach(el => {
@@ -175,6 +172,7 @@ function renderHome(container) {
   });
 }
 
+// --- RENDER TEAM (Instructor + Card Holder) ---
 function renderTeam(container) {
   let html = '';
   if (!appData.profiles || appData.profiles.length === 0) {
@@ -199,7 +197,8 @@ function renderTeam(container) {
     `;
   }
 
-  html += `<div class="member-grid">`;
+  // WRAP MEMBERS GRID IN CARD HOLDER
+  html += `<div class="group-card-holder"><div class="member-grid">`;
   members.forEach(m => {
     const mImg = getSmartImg(m.imgUrl);
     const mData = encodeData(m);
@@ -212,7 +211,8 @@ function renderTeam(container) {
       </div>
     `;
   });
-  html += `</div>`;
+  html += `</div></div>`; // Close grid and holder
+  
   container.innerHTML = html;
 }
 
