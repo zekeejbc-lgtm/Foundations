@@ -1,5 +1,6 @@
 // ----------------------------------------------------
-// 🔴 PASTE YOUR NEW GOOGLE SCRIPT URL HERE 🔴
+// YOUR GOOGLE APPS SCRIPT URL
+// ----------------------------------------------------
 const API_URL = "https://script.google.com/macros/s/AKfycbxe4e9qXtRv5caC_oMtcwZsdrkJc4oQ8aNrZWBvMAkOlFAtcLHUKyuhQ66uNLPz8wNE/exec"; 
 // ----------------------------------------------------
 
@@ -7,23 +8,27 @@ let appData = {};
 let currentDataHash = ""; 
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 1. Initialize Theme & Nav
   initTheme();
   const cachedView = localStorage.getItem('currentView') || 'home';
   updateNavState(cachedView);
   
-  console.log("Attempting to fetch data..."); // Debug Log
+  console.log("Attempting to fetch data...");
   showToast("Connecting...");
   
+  // 2. Start Fetch
   fetchData();
+
+  // 3. Start Polling
   setInterval(checkForDataUpdates, 30000);
 });
 
 window.addEventListener('beforeunload', () => localStorage.setItem('scrollPos', window.scrollY));
 
-// --- FETCH ---
+// --- FETCH DATA ---
 async function fetchData() {
   try {
-    // Add a timestamp to prevent browser caching of the API call
+    // Add timestamp to prevent caching issues
     const response = await fetch(API_URL + "?t=" + new Date().getTime());
     
     if (!response.ok) {
@@ -31,39 +36,36 @@ async function fetchData() {
     }
 
     const data = await response.json();
-    console.log("Data received:", data); // Debug Log
+    console.log("Data received:", data); 
 
     if(data.status === 'success' || data.status === 'partial_error') {
       currentDataHash = JSON.stringify(data);
       appData = data;
       
-      // Check if we are still in loading state
-      const isInitial = document.getElementById('app-content').innerHTML.includes('Loading');
+      // FIXED: Removed the 'if(isInitial)' check.
+      // We FORCE render immediately because we know data just arrived.
+      showToast("Loaded Successfully!");
       
-      if(isInitial) {
-        showToast("Loaded Successfully!");
-        renderFooter(data.contacts);
-        renderView(localStorage.getItem('currentView') || 'home');
-        
-        const scroll = localStorage.getItem('scrollPos');
-        if(scroll) setTimeout(() => window.scrollTo(0, parseInt(scroll)), 50);
-      }
+      // 1. Render Footer
+      renderFooter(data.contacts);
+      
+      // 2. Render Main View (Home or Team)
+      renderView(localStorage.getItem('currentView') || 'home');
+      
+      // 3. Restore Scroll
+      const scroll = localStorage.getItem('scrollPos');
+      if(scroll) setTimeout(() => window.scrollTo(0, parseInt(scroll)), 50);
+
     } else { 
       throw new Error("API Error: " + data.message); 
     }
   } catch (err) {
-    console.error("Fetch Failed:", err); // Debug Log
-    showToast("Error: Content cannot load.");
-    // If appData is empty, show backup
+    console.error("Fetch Failed:", err);
+    showToast("Offline Mode Active");
+    
+    // Only show backup if we have absolutely nothing
     if(!appData.content) {
-      document.getElementById('app-content').innerHTML = `
-        <div style="text-align:center; padding:2rem;">
-          <h3>Connection Failed</h3>
-          <p>Could not retrieve data from Google Sheets.</p>
-          <p style="color:red; font-size:0.8rem;">${err.message}</p>
-          <button onclick="window.location.reload()" class="nav-btn" style="background:#333; color:white; margin-top:10px;">Try Again</button>
-        </div>
-      `;
+      renderAppBackup();
     }
   }
 }
@@ -145,8 +147,11 @@ function updateNavState(viewName) {
 
 function renderView(viewName) {
   const container = document.getElementById('app-content');
-  container.innerHTML = '';
-  if(!appData.content) return;
+  // We don't clear innerHTML immediately here to prevent flashing white,
+  // renderHome/renderTeam will overwrite it.
+  
+  if(!appData.content) return; 
+
   if(viewName === 'home') renderHome(container);
   else renderTeam(container);
 }
@@ -189,6 +194,7 @@ function renderHome(container) {
   });
   html += `</div>`;
   container.innerHTML = html;
+  
   container.querySelectorAll('.img-overlay').forEach(el => {
     el.onclick = function() { this.parentElement.nextElementSibling.querySelector('button').click(); };
   });
@@ -198,7 +204,7 @@ function renderTeam(container) {
   let html = '';
   
   if (!appData.profiles || appData.profiles.length === 0) {
-    container.innerHTML = "<p style='text-align:center; margin-top:2rem;'>No profiles found in database.</p>";
+    container.innerHTML = "<div style='text-align:center; padding:2rem;'><h3>No Profiles Found</h3><p>Please check the Google Sheet 'Profiles' tab.</p></div>";
     return;
   }
 
@@ -323,13 +329,16 @@ document.querySelectorAll('.close-btn').forEach(btn => {
   }
 });
 
+// --- HELPERS ---
 function encodeData(obj) { return JSON.stringify(obj).replace(/'/g, "&apos;").replace(/"/g, "&quot;"); }
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.innerText = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 4000);
 }
+
 function showActionToast(msg, btnText, callback) {
   const t = document.getElementById('toast');
   if(t.innerHTML.includes('<button')) return;
@@ -338,10 +347,19 @@ function showActionToast(msg, btnText, callback) {
   const btn = document.getElementById('toast-action');
   btn.onclick = () => { t.classList.remove('show'); callback(); };
 }
+
 function renderAppBackup() {
-  renderApp([{title:"Offline", desc:"Check connection.", type:"Image"}], []);
+  const container = document.getElementById('app-content');
+  container.innerHTML = `
+    <div style="text-align:center; padding:2rem;">
+      <h3>Offline</h3>
+      <p>Please check your internet connection.</p>
+      <button onclick="window.location.reload()" class="btn-details" style="margin-top:10px;">Retry</button>
+    </div>
+  `;
 }
 
+// --- INSTALL ---
 let deferredPrompt;
 const installBtn = document.getElementById('install-btn');
 window.addEventListener('beforeinstallprompt', (e) => {
