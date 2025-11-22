@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cachedView = localStorage.getItem('currentView') || 'home';
   updateNavState(cachedView);
   
-  console.log("Attempting to fetch data...");
+  console.log("Fetching data...");
   showToast("Connecting...");
   
   fetchData();
@@ -31,7 +31,6 @@ async function fetchData() {
     if(data.status === 'success' || data.status === 'partial_error') {
       currentDataHash = JSON.stringify(data);
       appData = data;
-      
       showToast("Loaded Successfully!");
       renderFooter(data.contacts);
       renderView(localStorage.getItem('currentView') || 'home');
@@ -123,7 +122,7 @@ function renderView(viewName) {
   else renderTeam(container);
 }
 
-// --- RENDER HOME (Hero + Card Holder) ---
+// --- RENDER HOME (Group Card Holder + Fixed Layout) ---
 function renderHome(container) {
   let html = '';
   const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
@@ -144,7 +143,6 @@ function renderHome(container) {
     `;
   }
 
-  // WRAP GRID IN CARD HOLDER
   html += `<div class="group-card-holder"><div class="grid">`;
   cards.forEach(item => {
     const type = item.type ? item.type.toLowerCase() : 'image';
@@ -163,8 +161,7 @@ function renderHome(container) {
       </div>
     `;
   });
-  html += `</div></div>`; // Close grid and holder
-  
+  html += `</div></div>`;
   container.innerHTML = html;
   
   container.querySelectorAll('.img-overlay').forEach(el => {
@@ -172,7 +169,7 @@ function renderHome(container) {
   });
 }
 
-// --- RENDER TEAM (Instructor + Card Holder) ---
+// --- RENDER TEAM (Group Card Holder) ---
 function renderTeam(container) {
   let html = '';
   if (!appData.profiles || appData.profiles.length === 0) {
@@ -197,7 +194,6 @@ function renderTeam(container) {
     `;
   }
 
-  // WRAP MEMBERS GRID IN CARD HOLDER
   html += `<div class="group-card-holder"><div class="member-grid">`;
   members.forEach(m => {
     const mImg = getSmartImg(m.imgUrl);
@@ -211,8 +207,7 @@ function renderTeam(container) {
       </div>
     `;
   });
-  html += `</div></div>`; // Close grid and holder
-  
+  html += `</div></div>`;
   container.innerHTML = html;
 }
 
@@ -237,17 +232,19 @@ function getSmartImg(url) {
   return url;
 }
 
+// FIXED YOUTUBE HANDLER
 function getMediaHtml(url, type, autoplay) {
   if (!url) return '';
   type = type ? type.toLowerCase() : 'image';
-  if (url.includes("youtube")) {
-    const id = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/))([^&?]*)/);
-    if(id) {
-       let src = `https://www.youtube.com/embed/${id[1]}?modestbranding=1&rel=0`;
-       if(autoplay) src += "&autoplay=1";
-       return `<iframe src="${src}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-    }
+  
+  // YouTube (Covers youtu.be, youtube.com/watch, embed)
+  const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+  if (ytMatch && ytMatch[1]) {
+     let src = `https://www.youtube.com/embed/${ytMatch[1]}?modestbranding=1&rel=0`;
+     if(autoplay) src += "&autoplay=1";
+     return `<iframe src="${src}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
   }
+  
   if (type === 'video' || type === 'advocacy') {
     const match = url.match(/[-\w]{25,}/);
     if(match && url.includes("drive")) {
@@ -260,16 +257,29 @@ function getMediaHtml(url, type, autoplay) {
   return `<img src="${getSmartImg(url)}">`;
 }
 
+// --- MODALS & IMAGE ZOOM ---
 window.openModal = function(data) {
   const m = document.getElementById('modal');
+  const mediaArea = document.getElementById('m-media');
+  
   document.getElementById('m-title').innerText = data.title;
   document.getElementById('m-desc').innerText = data.desc;
-  document.getElementById('m-media').innerHTML = getMediaHtml(data.url, data.type, true);
+  
+  const html = getMediaHtml(data.url, data.type, true);
+  mediaArea.innerHTML = html;
+  
+  // Zoom Logic for Image
+  const img = mediaArea.querySelector('img');
+  if(img) {
+    img.onclick = () => openImageViewer(img.src);
+  }
+
   const refBox = document.getElementById('m-ref-box');
   if(data.ref) {
     refBox.style.display = 'block';
     document.getElementById('m-ref-content').innerHTML = data.ref.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="ref-link">$1</a>');
   } else { refBox.style.display = 'none'; }
+  
   m.style.display = 'flex';
   setTimeout(() => m.classList.add('active'), 10);
 }
@@ -285,6 +295,16 @@ window.openProfile = function(data) {
   else { fb.style.display = 'none'; }
   m.style.display = 'flex';
   setTimeout(() => m.classList.add('active'), 10);
+}
+
+function openImageViewer(src) {
+  const viewer = document.getElementById('image-viewer');
+  document.getElementById('v-img').src = src;
+  viewer.classList.add('active');
+}
+
+window.closeImageViewer = function() {
+  document.getElementById('image-viewer').classList.remove('active');
 }
 
 document.querySelectorAll('.close-btn').forEach(btn => {
