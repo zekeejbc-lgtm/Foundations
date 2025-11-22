@@ -1,5 +1,5 @@
 // ----------------------------------------------------
-// YOUR API URL
+// PASTE YOUR NEW DEPLOYMENT URL HERE
 // ----------------------------------------------------
 const API_URL = "https://script.google.com/macros/s/AKfycbxe4e9qXtRv5caC_oMtcwZsdrkJc4oQ8aNrZWBvMAkOlFAtcLHUKyuhQ66uNLPz8wNE/exec"; 
 // ----------------------------------------------------
@@ -24,26 +24,33 @@ window.addEventListener('beforeunload', () => localStorage.setItem('scrollPos', 
 async function fetchData() {
   try {
     const response = await fetch(API_URL);
+    
+    // Check if response is OK
+    if (!response.ok) throw new Error("Network response was not ok");
+
     const data = await response.json();
 
-    if(data.status === 'success') {
+    if(data.status === 'success' || data.status === 'partial_error') {
       currentDataHash = JSON.stringify(data);
       appData = data;
       
-      const isInitial = document.getElementById('app-content').innerHTML.includes('div');
+      const isInitial = document.getElementById('app-content').innerHTML.includes('Loading');
       
       if(isInitial) {
-        showToast("Loaded!");
+        showToast("Loaded Successfully!");
         renderFooter(data.contacts);
         renderView(localStorage.getItem('currentView') || 'home');
         
         const scroll = localStorage.getItem('scrollPos');
         if(scroll) setTimeout(() => window.scrollTo(0, parseInt(scroll)), 50);
       }
-    } else { throw new Error(data.message); }
+    } else { 
+      throw new Error("API Error: " + data.message); 
+    }
   } catch (err) {
     console.error(err);
-    showToast("Offline Mode Active");
+    showToast("Error: Content cannot load.");
+    // If appData is empty, show backup
     if(!appData.content) renderAppBackup();
   }
 }
@@ -169,7 +176,6 @@ function renderHome(container) {
   });
   html += `</div>`;
   container.innerHTML = html;
-  
   container.querySelectorAll('.img-overlay').forEach(el => {
     el.onclick = function() { this.parentElement.nextElementSibling.querySelector('button').click(); };
   });
@@ -177,6 +183,13 @@ function renderHome(container) {
 
 function renderTeam(container) {
   let html = '';
+  
+  // Safety check if profiles exist
+  if (!appData.profiles || appData.profiles.length === 0) {
+    container.innerHTML = "<p style='text-align:center; margin-top:2rem;'>No profiles found in database.</p>";
+    return;
+  }
+
   const instructor = appData.profiles.find(p => p.role.toLowerCase() === 'instructor');
   const members = appData.profiles.filter(p => p.role.toLowerCase() !== 'instructor');
 
@@ -215,16 +228,13 @@ function renderTeam(container) {
 function renderFooter(contacts) {
   const f = document.getElementById('footer-target');
   let h = '';
-  if(contacts) {
+  if(contacts && contacts.length > 0) {
     contacts.forEach(c => {
       const link = c.link ? `<br><a href="${c.link}" target="_blank">Open Link</a>` : '';
-      h += `
-        <div class="footer-col">
-          <h4>${c.title}</h4>
-          <p>${c.desc.replace(/\n/g, '<br>')}</p>
-          ${link}
-        </div>`;
+      h += `<div class="footer-col"><h4>${c.title}</h4><p>${c.desc.replace(/\n/g, '<br>')}</p>${link}</div>`;
     });
+  } else {
+    h = "<p>No contacts loaded.</p>";
   }
   f.innerHTML = h;
 }
@@ -268,15 +278,11 @@ window.openModal = function(data) {
   document.getElementById('m-title').innerText = data.title;
   document.getElementById('m-desc').innerText = data.desc;
   document.getElementById('m-media').innerHTML = getMediaHtml(data.url, data.type, true);
-  
   const refBox = document.getElementById('m-ref-box');
   if(data.ref) {
     refBox.style.display = 'block';
     document.getElementById('m-ref-content').innerHTML = data.ref.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="ref-link">$1</a>');
-  } else { 
-    refBox.style.display = 'none'; 
-  }
-  
+  } else { refBox.style.display = 'none'; }
   m.style.display = 'flex';
   setTimeout(() => m.classList.add('active'), 10);
 }
@@ -287,15 +293,9 @@ window.openProfile = function(data) {
   document.getElementById('p-role').innerText = data.role + (data.program ? " | " + data.program : "");
   document.getElementById('p-bio').innerText = data.fullBio || data.shortDesc;
   document.getElementById('p-img').src = getSmartImg(data.imgUrl);
-  
   const fb = document.getElementById('p-fb');
-  if(data.fbLink) { 
-    fb.style.display = 'inline-block'; 
-    fb.href = data.fbLink; 
-  } else { 
-    fb.style.display = 'none'; 
-  }
-  
+  if(data.fbLink) { fb.style.display = 'inline-block'; fb.href = data.fbLink; }
+  else { fb.style.display = 'none'; }
   m.style.display = 'flex';
   setTimeout(() => m.classList.add('active'), 10);
 }
@@ -311,38 +311,25 @@ document.querySelectorAll('.close-btn').forEach(btn => {
   }
 });
 
-// --- HELPERS ---
 function encodeData(obj) { return JSON.stringify(obj).replace(/'/g, "&apos;").replace(/"/g, "&quot;"); }
-
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.innerText = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(() => t.classList.remove('show'), 4000);
 }
-
 function showActionToast(msg, btnText, callback) {
   const t = document.getElementById('toast');
   if(t.innerHTML.includes('<button')) return;
-  
-  t.innerHTML = `
-    <span style="margin-right:10px">${msg}</span>
-    <button id="toast-action" class="toast-btn">${btnText}</button>
-  `;
+  t.innerHTML = `<span style="margin-right:10px">${msg}</span><button id="toast-action" class="toast-btn">${btnText}</button>`;
   t.classList.add('show');
-  
   const btn = document.getElementById('toast-action');
-  btn.onclick = () => {
-    t.classList.remove('show');
-    callback();
-  };
+  btn.onclick = () => { t.classList.remove('show'); callback(); };
 }
-
 function renderAppBackup() {
   renderApp([{title:"Offline", desc:"Check connection.", type:"Image"}], []);
 }
 
-// --- INSTALL ---
 let deferredPrompt;
 const installBtn = document.getElementById('install-btn');
 window.addEventListener('beforeinstallprompt', (e) => {
