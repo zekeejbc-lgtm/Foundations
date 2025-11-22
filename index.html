@@ -4,79 +4,59 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>IDD Awareness USeP</title>
-  <meta name="description" content="University of Southeastern Philippines IDD Awareness Campaign">
-
-  <!-- PWA Settings -->
+  
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#781d22">
-  
-  <!-- iOS Support -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="IDD USeP">
   <link rel="apple-touch-icon" href="icon-192.png">
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
-  
-  <!-- CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <!-- Toast -->
   <div id="toast" class="toast">Initializing...</div>
 
   <!-- Header -->
-  <header>
-    <div class="brand">
-      <!-- Local icon for offline support -->
-      <img src="icon-192.png" alt="USeP Logo">
-      <div>
-        <div class="school-name">University of Southeastern Philippines</div>
-        <div class="campus">Tagum-Mabini Campus, Tagum Unit</div>
-        <div class="course">Foundations of Special and Inclusive Education</div>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <img src="icon-192.png" alt="Logo">
+        <div class="header-text">
+          <h1 class="school-name">USeP Tagum-Mabini</h1>
+          <p class="course-name">Special & Inclusive Education</p>
+        </div>
       </div>
+      
+      <!-- Navigation -->
+      <nav class="nav-group">
+        <button id="nav-home" class="nav-btn active" onclick="switchView('home')">Home</button>
+        <button id="nav-team" class="nav-btn" onclick="switchView('members')">Our Team</button>
+      </nav>
     </div>
   </header>
 
-  <!-- Install PWA Button -->
+  <!-- Install Button -->
   <button id="install-btn" class="install-btn" style="display:none;">
-    <span class="icon">⬇️</span> Install App
+    <span>⬇️</span> Install App
   </button>
 
-  <!-- Hero / Advocacy Section -->
-  <div class="hero-section" id="hero-wrap">
-    <h2 class="hero-title" id="hero-title"></h2>
-    <p class="hero-desc" id="hero-desc"></p>
-    <div class="hero-video" id="hero-vid"></div>
-  </div>
-
-  <!-- Main Content -->
-  <div class="container">
-    <div class="section-header">
-      <div class="section-bar"></div>
-      <h2 class="section-title">Awareness Materials</h2>
-    </div>
-    
-    <div class="grid" id="grid-target">
-      <!-- Loading Skeletons -->
-      <div class="sk-box sk-card"></div>
-      <div class="sk-box sk-card"></div>
-    </div>
-  </div>
+  <!-- MAIN DYNAMIC CONTENT -->
+  <main id="app-content">
+    <div class="loading">Loading content...</div>
+  </main>
 
   <!-- Footer -->
   <footer>
-    <div class="footer-grid" id="footer-target">
-      <p>Loading Contacts...</p>
-    </div>
+    <div class="footer-grid" id="footer-target"></div>
     <div class="copyright">
       <div style="color: var(--accent); font-weight:800; margin-bottom:8px; letter-spacing:1px;">INTELLECTUAL AND DEVELOPMENTAL DISABILITY</div>
       Group 1 - Bachelor of Secondary Education major in Filipino 1st Year 1SF students
     </div>
   </footer>
 
-  <!-- Modal Popup -->
+  <!-- CONTENT MODAL (For Articles/Images) -->
   <div id="modal" class="modal">
     <div class="modal-box">
       <button class="close-btn" id="close-modal">&times;</button>
@@ -85,22 +65,29 @@
         <h2 class="modal-title" id="m-title"></h2>
         <div class="modal-desc" id="m-desc"></div>
         <div id="m-ref-box" class="modal-ref">
-          <h5>References & Resources</h5>
+          <h5>References</h5>
           <div class="ref-content" id="m-ref-content"></div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- PROFILE MODAL (For Team Members) -->
+  <div id="profile-modal" class="modal">
+    <div class="modal-box profile-box">
+      <button class="close-btn" id="close-profile">&times;</button>
+      <img id="p-img" class="modal-profile-img" src="">
+      <h2 id="p-name" class="p-name"></h2>
+      <p id="p-role" class="p-role"></p>
+      <div id="p-bio" class="modal-desc"></div>
+      <a id="p-fb" href="#" target="_blank" class="fb-btn">Visit Facebook Profile</a>
+    </div>
+  </div>
+
   <script src="script.js"></script>
   <script>
-    // Register Service Worker
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('SW Registered'))
-          .catch(err => console.log('SW Error', err));
-      });
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
     }
   </script>
 </body>
