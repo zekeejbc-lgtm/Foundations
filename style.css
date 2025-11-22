@@ -131,12 +131,15 @@ header {
   display: flex; flex-direction: column;
 }
 
-/* HERO */
+/* ... (Keep Header/Nav styles same) ... */
+
+/* HERO SECTION UPDATED */
 .hero-section { 
-  width: 100%;
-  margin-bottom: 60px; /* Space between Hero and Grid */
+  max-width: 900px; 
+  margin: 0 auto 5rem; 
   text-align: center; 
 }
+
 .hero-title { 
   font-family: 'Cinzel', serif; color: var(--primary); 
   font-size: 2.2rem; margin-bottom: 2rem; font-weight: 800; 
@@ -144,21 +147,41 @@ header {
 }
 [data-theme="dark"] .hero-title { color: var(--accent); }
 
-/* Hero Text Justified */
-.hero-desc {
-  font-size: 1.1rem; color: var(--text-main); 
-  line-height: 1.8;
-  text-align: justify; text-justify: inter-word; /* Justified */
-  margin-top: 2rem;
-  max-width: 850px; margin-left: auto; margin-right: auto;
-}
-
 .hero-video {
   width: 100%; aspect-ratio: 16/9; background: #000;
   border-radius: var(--radius); border: 4px solid var(--card-bg);
   box-shadow: var(--shadow); overflow: hidden;
+  margin-bottom: 2rem;
 }
 .hero-video iframe { width: 100%; height: 100%; border: none; }
+
+/* NEW HERO DESCRIPTION CARD */
+.hero-desc-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 2.5rem; /* Spacious padding inside */
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  margin-top: 2rem;
+  text-align: left; /* Reset alignment for the box */
+}
+
+.hero-desc {
+  font-size: 1.1rem; 
+  color: var(--text-main); 
+  line-height: 1.8;
+  text-align: justify; 
+  text-justify: inter-word;
+  margin: 0; /* Remove margins since the card has padding */
+}
+
+/* Mobile Adjustment for Hero Card */
+@media (max-width: 600px) {
+  .hero-desc-card { padding: 1.5rem; }
+  .hero-title { font-size: 1.6rem; }
+}
+
+/* ... (Keep the rest of the CSS the same) ... */
 
 /* SECTION HEADER */
 .section-header { text-align: center; margin-bottom: 40px; position: relative; }
@@ -314,3 +337,4 @@ footer {
 .sk-box { background: linear-gradient(90deg, var(--bg) 25%, var(--border) 50%, var(--bg) 75%); background-size: 200% 100%; animation: pulse 1.5s infinite; border-radius: var(--radius); }
 .sk-card { height: 400px; width: 100%; }
 @keyframes pulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
