@@ -123,7 +123,7 @@ function renderView(viewName) {
   else renderTeam(container);
 }
 
-// --- RENDER HOME (UPDATED WITH HERO CARD) ---
+// --- RENDER HOME (ORDER: VIDEO -> TITLE -> CARD DESC) ---
 function renderHome(container) {
   let html = '';
   const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
@@ -133,10 +133,13 @@ function renderHome(container) {
     const vidHtml = getMediaHtml(videoItem.url, 'video', false);
     html += `
       <div class="hero-section">
-        <h2 class="hero-title">${videoItem.title}</h2>
+        <!-- 1. VIDEO -->
         <div class="hero-video">${vidHtml}</div>
         
-        <!-- NEW: Description inside a Card -->
+        <!-- 2. TITLE -->
+        <h2 class="hero-title">${videoItem.title}</h2>
+        
+        <!-- 3. DESC CARD -->
         <div class="hero-desc-card">
           <div class="hero-desc">${videoItem.desc}</div>
         </div>
@@ -311,14 +314,7 @@ function showActionToast(msg, btnText, callback) {
   btn.onclick = () => { t.classList.remove('show'); callback(); };
 }
 function renderAppBackup() {
-  const container = document.getElementById('app-content');
-  container.innerHTML = `
-    <div style="text-align:center; padding:2rem;">
-      <h3>Offline</h3>
-      <p>Please check your internet connection.</p>
-      <button onclick="window.location.reload()" class="btn-details" style="margin-top:10px;">Retry</button>
-    </div>
-  `;
+  renderApp([{title:"Offline", desc:"Check connection.", type:"Image"}], []);
 }
 
 let deferredPrompt;
@@ -329,4 +325,3 @@ window.addEventListener('beforeinstallprompt', (e) => {
 installBtn.addEventListener('click', () => {
   installBtn.style.display = 'none'; deferredPrompt.prompt();
 });
-
