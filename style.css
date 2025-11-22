@@ -1,8 +1,8 @@
 :root {
   /* --- LIGHT THEME --- */
-  --primary: #781d22;  
+  --primary: #781d22;  /* USeP Maroon */
   --primary-hover: #5a1216;
-  --accent: #fab005;   
+  --accent: #fab005;   /* Gold */
   
   --bg: #F9FAFB;
   --card-bg: #FFFFFF;
@@ -17,16 +17,16 @@
 
 /* --- DARK THEME --- */
 [data-theme="dark"] {
-  --bg: #0f172a;       
-  --card-bg: #1e293b;  
+  --bg: #0f172a;       /* Deep Navy */
+  --card-bg: #1e293b;  /* Slate */
   --text-main: #f1f5f9;
   --text-sub: #94a3b8;
   --border: #334155;
   --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
   
-  --primary: #ef4444;  
+  --primary: #ef4444;  /* Bright Red for Visibility */
   --primary-hover: #b91c1c;
-  --accent: #facc15;
+  --accent: #facc15;   
   --link-hover: #ef4444;
 }
 
@@ -47,7 +47,7 @@ body {
   overflow-x: hidden;
 }
 
-/* HEADER (FIXED: Full Text Always) */
+/* HEADER */
 header {
   background: var(--card-bg);
   padding: 15px 5%;
@@ -66,7 +66,7 @@ header {
 
 .header-text { display: flex; flex-direction: column; }
 
-/* Fonts */
+/* FONTS */
 .school-name {
   font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.2rem;
   color: var(--primary); line-height: 1.2; margin: 0;
@@ -96,6 +96,7 @@ header {
   background: var(--primary); color: white; border-color: var(--primary);
 }
 
+/* TOGGLE */
 .theme-switch {
   position: relative; width: 60px; height: 32px;
   background: var(--border); border-radius: 20px;
@@ -114,28 +115,17 @@ header {
 [data-theme="dark"] .sun-icon { display: none; }
 [data-theme="dark"] .moon-icon { display: block; }
 
-/* --- LAYOUT & MARGIN FIXES --- */
+/* LAYOUT - MARGINS FIXED */
 .container {
   max-width: 1200px; 
-  margin: 2rem auto; /* Top/Bottom Margin from Header/Footer */
-  padding: 2rem;     /* Internal Padding so content doesn't touch box edge */
-  width: 95%;        /* Prevents touching Left/Right edge on mobile */
+  margin: 2rem auto; /* Margin away from header/footer */
+  padding: 2rem 20px 6rem 20px; /* Internal padding + Extra bottom padding */
+  width: 95%;
   flex: 1;
 }
 
-/* Mobile Header Stack */
-@media (max-width: 850px) {
-  .header-inner { flex-direction: column; text-align: center; gap: 15px; }
-  .brand { flex-direction: column; }
-  .container { margin: 1rem auto; width: 92%; padding: 1rem; } /* Smaller margins on mobile */
-}
-
 /* HERO */
-.hero-section { 
-  max-width: 900px; 
-  margin: 0 auto 4rem; /* Bottom margin to separate from grid */
-  text-align: center; 
-}
+.hero-section { max-width: 900px; margin: 0 auto 4rem; text-align: center; }
 .hero-title { font-family: 'Cinzel', serif; color: var(--primary); font-size: 2rem; margin-bottom: 1rem; font-weight: 800; }
 [data-theme="dark"] .hero-title { color: var(--accent); }
 .hero-desc {
@@ -149,7 +139,7 @@ header {
 }
 .hero-video iframe { width: 100%; height: 100%; border: none; }
 
-/* SECTION TITLES */
+/* SECTION HEADER */
 .section-header { text-align: center; margin-bottom: 3rem; position: relative; }
 .section-header::after {
   content: ''; display: block; width: 60px; height: 4px;
@@ -162,7 +152,7 @@ header {
 [data-theme="dark"] .section-title { color: white; }
 
 /* GRID */
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 3rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2.5rem; }
 .card {
   background: var(--card-bg); border-radius: var(--radius);
   overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border);
@@ -266,7 +256,7 @@ footer {
 [data-theme="dark"] .footer-col a:hover { color: var(--primary); border-bottom-color: var(--primary); }
 .copyright { text-align: center; margin-top: 3rem; font-size: 0.9rem; opacity: 0.8; }
 
-/* TOAST & BUTTONS */
+/* TOAST */
 .toast { position: fixed; bottom: 30px; right: 30px; background: #1f2937; color: white; padding: 16px 24px; border-radius: 12px; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 15px; transform: translateY(100px); opacity: 0; transition: all 0.4s; border-left: 4px solid var(--accent); max-width: 90%; width: auto; font-size: 0.95rem; }
 .toast.show { transform: translateY(0); opacity: 1; }
 .toast-btn { background: var(--accent); color: #781d22; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; cursor: pointer; text-transform: uppercase; margin-left: auto; white-space: nowrap; }
@@ -276,3 +266,9 @@ footer {
 .sk-box { background: linear-gradient(90deg, var(--bg) 25%, var(--border) 50%, var(--bg) 75%); background-size: 200% 100%; animation: pulse 1.5s infinite; border-radius: var(--radius); }
 .sk-card { height: 400px; width: 100%; }
 @keyframes pulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+@media (max-width: 850px) {
+  .header-inner { flex-direction: column; text-align: center; gap: 15px; }
+  .brand { flex-direction: column; }
+  .container { margin: 1rem auto; width: 92%; padding: 1rem 1rem 5rem 1rem; }
+}
