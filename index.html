@@ -18,25 +18,29 @@
   <div id="toast" class="toast">Initializing...</div>
 
   <!-- Header -->
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="brand">
-        <img src="icon-192.png" alt="Logo">
-        <div class="header-text">
-          <h1 class="school-name">University of Southeastern Philippines</h1>
-          <p class="campus-name">Tagum-Mabini Campus, Tagum Unit</p>
-          <p class="course-name">Foundations of Special and Inclusive Education</p>
-        </div>
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <img src="icon-192.png" alt="Logo">
+      <div class="header-text">
+        <h1 class="school-name">USeP Tagum-Mabini</h1>
+        <p class="campus-name">Tagum-Mabini Campus, Tagum Unit</p>
+        <p class="course-name">Special & Inclusive Education</p>
       </div>
-      
-      <!-- Nav + Dark Mode Toggle -->
-      <nav class="nav-group">
-        <button id="nav-home" class="nav-btn active" onclick="switchView('home')">Home</button>
-        <button id="nav-team" class="nav-btn" onclick="switchView('members')">Team</button>
-        <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle Dark Mode">🌙</button>
-      </nav>
     </div>
-  </header>
+    
+    <!-- Nav + New Theme Switch -->
+    <nav class="nav-group">
+      <button id="nav-home" class="nav-btn active" onclick="switchView('home')">Home</button>
+      <button id="nav-team" class="nav-btn" onclick="switchView('members')">Team</button>
+      
+      <!-- NEW TOGGLE BUTTON -->
+      <button class="theme-switch" onclick="toggleTheme()" aria-label="Toggle Dark Mode">
+        <div class="theme-switch-handle" id="theme-icon">☀️</div>
+      </button>
+    </nav>
+  </div>
+</header>
 
   <!-- Install Button -->
   <button id="install-btn" class="install-btn" style="display:none;">
@@ -95,3 +99,4 @@
   </script>
 </body>
 </html>
+
