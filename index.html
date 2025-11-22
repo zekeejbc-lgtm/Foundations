@@ -78,17 +78,20 @@
     </div>
   </footer>
 
-  <!-- Modal -->
+ <!-- Modal -->
   <div id="modal" class="modal">
     <div class="modal-box">
       <button class="close-btn" id="close-modal">&times;</button>
-      <div class="modal-media-area" id="m-media"></div>
-      <div class="modal-body">
-        <h2 class="modal-title" id="m-title"></h2>
-        <div class="modal-desc" id="m-desc"></div>
-        <div id="m-ref-box" class="modal-ref">
-          <h5>References</h5>
-          <div class="ref-content" id="m-ref-content"></div>
+      <!-- Scrollable Content Wrapper -->
+      <div class="modal-scroll-content">
+        <div class="modal-media-area" id="m-media"></div>
+        <div class="modal-body">
+          <h2 class="modal-title" id="m-title"></h2>
+          <div class="modal-desc" id="m-desc"></div>
+          <div id="m-ref-box" class="modal-ref">
+            <h5>References</h5>
+            <div class="ref-content" id="m-ref-content"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -98,11 +101,14 @@
   <div id="profile-modal" class="modal">
     <div class="modal-box profile-box">
       <button class="close-btn" id="close-profile">&times;</button>
-      <img id="p-img" class="inst-img" src="">
-      <h2 id="p-name" class="p-name"></h2>
-      <p id="p-role" class="inst-role"></p>
-      <div id="p-bio" class="modal-desc"></div>
-      <a id="p-fb" href="#" target="_blank" class="btn-details" style="display:inline-block; margin-top:15px; text-decoration:none;">Visit Facebook</a>
+      <!-- Scrollable Content Wrapper -->
+      <div class="modal-scroll-content" style="padding: 2.5rem; text-align: center;">
+        <img id="p-img" class="inst-img" src="">
+        <h2 id="p-name" class="p-name"></h2>
+        <p id="p-role" class="inst-role"></p>
+        <div id="p-bio" class="modal-desc"></div>
+        <a id="p-fb" href="#" target="_blank" class="btn-details" style="display:inline-block; margin-top:15px; text-decoration:none;">Visit Facebook</a>
+      </div>
     </div>
   </div>
 
@@ -112,3 +118,4 @@
   </script>
 </body>
 </html>
+
