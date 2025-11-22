@@ -1,8 +1,8 @@
 :root {
   /* --- LIGHT THEME --- */
-  --primary: #781d22;
+  --primary: #781d22;  
   --primary-hover: #5a1216;
-  --accent: #fab005;
+  --accent: #fab005;   
   
   --bg: #F9FAFB;
   --card-bg: #FFFFFF;
@@ -17,14 +17,14 @@
 
 /* --- DARK THEME --- */
 [data-theme="dark"] {
-  --bg: #0f172a;
-  --card-bg: #1e293b;
+  --bg: #0f172a;       
+  --card-bg: #1e293b;  
   --text-main: #f1f5f9;
   --text-sub: #94a3b8;
   --border: #334155;
   --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
   
-  --primary: #ef4444;
+  --primary: #ef4444;  
   --primary-hover: #b91c1c;
   --accent: #facc15;
   --link-hover: #ef4444;
@@ -47,10 +47,10 @@ body {
   overflow-x: hidden;
 }
 
-/* --- HEADER (FONTS FIXED) --- */
+/* HEADER (FIXED: Full Text Always) */
 header {
   background: var(--card-bg);
-  padding: 12px 5%;
+  padding: 15px 5%;
   border-top: 5px solid #781d22;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   position: sticky; top: 0; z-index: 100;
@@ -62,51 +62,35 @@ header {
 }
 
 .brand { display: flex; align-items: center; gap: 15px; }
-.brand img { height: 65px; width: 65px; border-radius: 50%; border: 2px solid var(--accent); padding: 2px; }
+.brand img { height: 65px; width: 65px; border-radius: 50%; border: 2px solid var(--accent); padding: 2px; flex-shrink: 0; }
 
 .header-text { display: flex; flex-direction: column; }
 
-/* School Name: Cinzel */
+/* Fonts */
 .school-name {
   font-family: 'Cinzel', serif; font-weight: 900; font-size: 1.2rem;
   color: var(--primary); line-height: 1.2; margin: 0;
 }
 [data-theme="dark"] .school-name { color: var(--accent); }
 
-/* Campus: Times New Roman Italic (Tinos) */
 .campus-name {
   font-family: 'Tinos', serif; font-style: italic; font-size: 0.95rem;
   color: var(--text-main); margin: 2px 0 0 0;
 }
 
-/* Course: Times New Roman Normal (Tinos) */
 .course-name {
   font-family: 'Tinos', serif; font-weight: 400; font-size: 0.9rem;
   color: var(--text-sub); border-top: 2px solid var(--accent);
   display: inline-block; margin-top: 4px; padding-top: 2px;
 }
 
-/* --- HEADER TEXT RESPONSIVE LOGIC --- */
-/* Default: Show Desktop, Hide Mobile */
-.mobile-text { display: none; }
-.desktop-text { display: inline; }
-
-@media (max-width: 768px) {
-  .desktop-text { display: none; }
-  .mobile-text { display: inline; }
-  
-  .header-inner { flex-direction: column; text-align: center; gap: 15px; }
-  .brand { flex-direction: column; }
-  .course-name { font-size: 0.8rem; }
-}
-
-/* NAV & TOGGLE */
+/* NAV */
 .nav-group { display: flex; align-items: center; gap: 12px; }
 .nav-btn {
   background: transparent; color: var(--text-main);
   border: 1px solid var(--border); padding: 8px 20px;
   border-radius: 30px; cursor: pointer; font-weight: 600;
-  font-size: 0.85rem; transition: all 0.3s;
+  font-size: 0.85rem; transition: all 0.3s; white-space: nowrap;
 }
 .nav-btn.active, .nav-btn:hover {
   background: var(--primary); color: white; border-color: var(--primary);
@@ -115,7 +99,7 @@ header {
 .theme-switch {
   position: relative; width: 60px; height: 32px;
   background: var(--border); border-radius: 20px;
-  cursor: pointer; border: none; display: flex; align-items: center; padding: 2px;
+  cursor: pointer; border: none; display: flex; align-items: center; padding: 2px; flex-shrink: 0;
 }
 .theme-switch-handle {
   width: 28px; height: 28px; background: white;
@@ -130,22 +114,28 @@ header {
 [data-theme="dark"] .sun-icon { display: none; }
 [data-theme="dark"] .moon-icon { display: block; }
 
-/* --- LAYOUT & SPACING (FIXED) --- */
+/* --- LAYOUT & MARGIN FIXES --- */
 .container {
-  max-width: 1200px; margin: 0 auto;
-  padding-top: 4rem;    /* Push content down from header */
-  padding-bottom: 8rem; /* Push content up from footer */
-  padding-left: 20px; padding-right: 20px;
-  width: 100%; flex: 1;
+  max-width: 1200px; 
+  margin: 2rem auto; /* Top/Bottom Margin from Header/Footer */
+  padding: 2rem;     /* Internal Padding so content doesn't touch box edge */
+  width: 95%;        /* Prevents touching Left/Right edge on mobile */
+  flex: 1;
 }
 
-/* Mobile Spacing Adjustment */
-@media (max-width: 600px) {
-  .container { padding-top: 2rem; padding-bottom: 5rem; }
+/* Mobile Header Stack */
+@media (max-width: 850px) {
+  .header-inner { flex-direction: column; text-align: center; gap: 15px; }
+  .brand { flex-direction: column; }
+  .container { margin: 1rem auto; width: 92%; padding: 1rem; } /* Smaller margins on mobile */
 }
 
 /* HERO */
-.hero-section { max-width: 900px; margin: 0 auto 5rem; text-align: center; }
+.hero-section { 
+  max-width: 900px; 
+  margin: 0 auto 4rem; /* Bottom margin to separate from grid */
+  text-align: center; 
+}
 .hero-title { font-family: 'Cinzel', serif; color: var(--primary); font-size: 2rem; margin-bottom: 1rem; font-weight: 800; }
 [data-theme="dark"] .hero-title { color: var(--accent); }
 .hero-desc {
@@ -202,7 +192,7 @@ header {
 [data-theme="dark"] .btn-details { border-color: var(--accent); color: var(--accent); }
 .btn-details:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
-/* TEAM CARD */
+/* TEAM */
 .instructor-card {
   background: var(--card-bg); border-radius: var(--radius); padding: 2.5rem; text-align: center;
   border: 2px solid var(--accent); box-shadow: var(--shadow);
@@ -218,7 +208,7 @@ header {
 [data-theme="dark"] .inst-name { color: white; }
 .inst-role { color: var(--text-sub); font-size: 0.95rem; margin-bottom: 15px; }
 
-.member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2rem; }
+.member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem; }
 .member-card {
   background: var(--card-bg); border-radius: var(--radius); padding: 1.5rem; text-align: center;
   border: 1px solid var(--border); box-shadow: var(--shadow); cursor: pointer; transition: transform 0.3s;
@@ -276,38 +266,13 @@ footer {
 [data-theme="dark"] .footer-col a:hover { color: var(--primary); border-bottom-color: var(--primary); }
 .copyright { text-align: center; margin-top: 3rem; font-size: 0.9rem; opacity: 0.8; }
 
-.toast { position: fixed; bottom: 30px; right: 30px; background: #222; color: white; padding: 12px 25px; border-radius: 30px; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-.toast.show { opacity: 1; }
+/* TOAST & BUTTONS */
+.toast { position: fixed; bottom: 30px; right: 30px; background: #1f2937; color: white; padding: 16px 24px; border-radius: 12px; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 15px; transform: translateY(100px); opacity: 0; transition: all 0.4s; border-left: 4px solid var(--accent); max-width: 90%; width: auto; font-size: 0.95rem; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast-btn { background: var(--accent); color: #781d22; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; cursor: pointer; text-transform: uppercase; margin-left: auto; white-space: nowrap; }
 .install-btn { position: fixed; bottom: 30px; left: 30px; z-index: 200; background: var(--accent); color: var(--primary); border: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
 .install-btn:hover { transform: scale(1.05); }
 
 .sk-box { background: linear-gradient(90deg, var(--bg) 25%, var(--border) 50%, var(--bg) 75%); background-size: 200% 100%; animation: pulse 1.5s infinite; border-radius: var(--radius); }
 .sk-card { height: 400px; width: 100%; }
 @keyframes pulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-/* ... previous CSS ... */
-
-/* ACTIONABLE TOAST */
-.toast {
-  position: fixed; bottom: 30px; right: 30px;
-  background: #1f2937; color: white;
-  padding: 16px 24px; border-radius: 12px;
-  z-index: 9999;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  display: flex; align-items: center; gap: 15px;
-  transform: translateY(100px); opacity: 0;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  max-width: 90%; width: auto; font-size: 0.95rem;
-  border-left: 4px solid var(--accent);
-}
-
-.toast.show { transform: translateY(0); opacity: 1; }
-
-.toast-btn {
-  background: var(--accent); color: #781d22;
-  border: none; padding: 6px 12px;
-  border-radius: 6px; font-weight: 700; font-size: 0.8rem;
-  cursor: pointer; text-transform: uppercase;
-  margin-left: auto; white-space: nowrap;
-}
-.toast-btn:hover { filter: brightness(1.1); }
