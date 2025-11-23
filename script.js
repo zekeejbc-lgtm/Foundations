@@ -33,12 +33,16 @@ async function fetchData() {
       currentDataHash = JSON.stringify(data);
       appData = data;
       
-      showToast("Loaded Successfully!");
-      renderFooter(data.contacts);
-      renderView(localStorage.getItem('currentView') || 'home');
+      const isInitial = document.getElementById('app-content').innerHTML.includes('sk-box') || document.getElementById('app-content').innerHTML === "";
       
-      const scroll = localStorage.getItem('scrollPos');
-      if(scroll) setTimeout(() => window.scrollTo(0, parseInt(scroll)), 50);
+      if(isInitial) {
+        showToast("Loaded Successfully!");
+        renderFooter(data.contacts);
+        renderView(localStorage.getItem('currentView') || 'home');
+        
+        const scroll = localStorage.getItem('scrollPos');
+        if(scroll) setTimeout(() => window.scrollTo(0, parseInt(scroll)), 50);
+      }
     } else { throw new Error("API Error: " + data.message); }
   } catch (err) {
     console.error("Fetch Failed:", err);
@@ -60,7 +64,7 @@ async function checkForDataUpdates() {
   } catch (e) {}
 }
 
-// --- NAVIGATION ---
+// --- NAV ---
 function renderView(view) {
   const container = document.getElementById('app-content');
   container.innerHTML = '';
@@ -84,7 +88,7 @@ function updateNavState(view) {
   if(btn) btn.classList.add('active');
 }
 
-// --- RENDER HOME ---
+// --- RENDERERS ---
 function renderHome(container) {
   let html = '';
   const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
@@ -130,7 +134,6 @@ function renderHome(container) {
   });
 }
 
-// --- RENDER TEAM ---
 function renderTeam(container) {
   let html = '';
   if (!appData.profiles || appData.profiles.length === 0) {
@@ -172,7 +175,7 @@ function renderTeam(container) {
   container.innerHTML = html;
 }
 
-// --- GAMES HUB ---
+// --- GAME ENGINE (FIXED GRID) ---
 function renderGamesHub(container) {
   if(!playerName) {
     container.innerHTML = `
@@ -198,18 +201,9 @@ function renderGamesHub(container) {
       <p style="margin-bottom:2rem;">Welcome, <b>${playerName}</b>! <a href="#" onclick="clearName()" style="color:var(--primary); font-size:0.8rem;">(Change)</a></p>
       ${lbHtml}
       <div class="game-menu">
-        <button class="game-btn" onclick="startWordSearch()">
-          <svg class="icon-svg" style="width:24px;height:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
-          Word Puzzle
-        </button>
-        <button class="game-btn" onclick="startQuiz()">
-          <svg class="icon-svg" style="width:24px;height:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-          Quiz
-        </button>
-        <button class="game-btn" onclick="startMemory()">
-          <svg class="icon-svg" style="width:24px;height:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M4 12V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5"/></svg>
-          Memory
-        </button>
+        <button class="game-btn" onclick="startWordSearch()">🧩 Word Search</button>
+        <button class="game-btn" onclick="startQuiz()">❓ Quiz</button>
+        <button class="game-btn" onclick="startMemory()">🧠 Memory</button>
       </div>
       <div id="game-board" style="background:var(--card-bg); padding:2rem; border-radius:20px; border:1px solid var(--border); min-height:300px; max-width:800px; margin:0 auto;">
         <p style="color:var(--text-sub);">Select a game to start playing!</p>
@@ -224,7 +218,39 @@ window.saveName = function() {
 }
 window.clearName = function() { localStorage.removeItem('playerName'); playerName = ""; renderGamesHub(document.getElementById('app-content')); }
 
-// --- GAMES LOGIC ---
+// GAME: WORD SEARCH (FIXED)
+window.startWordSearch = function() { 
+  const board = document.getElementById('game-board');
+  let words = appData.words && appData.words.length > 0 ? appData.words : [{word:"AUTISM",clue:"Dev disorder"}];
+  let gameWords = words.sort(() => 0.5 - Math.random()).slice(0, 8);
+  
+  // Dynamic Grid Size
+  const size = Math.max(10, Math.max(...gameWords.map(w=>w.word.length))+2);
+  let grid = Array(size).fill().map(() => Array(size).fill(''));
+  
+  gameWords.forEach(item => {
+    let w = item.word.toUpperCase().replace(/\s/g, '');
+    let placed=false, att=0;
+    while(!placed && att<100) {
+      let dir = Math.random()>0.5?'H':'V', r=Math.floor(Math.random()*size), c=Math.floor(Math.random()*size);
+      if(canPlace(grid,w,r,c,dir)) { placeWord(grid,w,r,c,dir); placed=true; }
+      att++;
+    }
+  });
+  
+  for(let r=0; r<size; r++) for(let c=0; c<size; c++) if(grid[r][c]==='') grid[r][c]=String.fromCharCode(65+Math.floor(Math.random()*26));
+  
+  // *** KEY FIX: Inline Style for Grid Columns ***
+  let h = `<div class="word-grid" style="grid-template-columns:repeat(${size}, 1fr);">`;
+  grid.forEach(r => r.forEach(c => h+=`<div class="word-cell" onclick="this.style.background='var(--accent)'; this.style.color='#781d22'">${c}</div>`));
+  h += `</div><div style="margin-top:20px;text-align:left;"><h4>Find:</h4><ul>${gameWords.map(w=>`<li>${w.clue}</li>`).join('')}</ul></div>`;
+  h += `<button class="btn-details" style="margin-top:20px;width:100%;" onclick="finishGame(50,'Word Search')">Finish</button>`;
+  board.innerHTML = h;
+}
+function canPlace(g,w,r,c,d) { if(d==='H' && c+w.length>g.length) return false; if(d==='V' && r+w.length>g.length) return false; for(let i=0;i<w.length;i++) if(d==='H' && g[r][c+i]!=='' && g[r][c+i]!==w[i]) return false; else if(d==='V' && g[r+i][c]!=='' && g[r+i][c]!==w[i]) return false; return true; }
+function placeWord(g,w,r,c,d) { for(let i=0;i<w.length;i++) if(d==='H') g[r][c+i]=w[i]; else g[r+i][c]=w[i]; }
+
+// GAME: QUIZ
 window.startQuiz = function() {
   const board = document.getElementById('game-board');
   if(!appData.quiz || appData.quiz.length === 0) { board.innerHTML = "No questions."; return; }
@@ -245,40 +271,13 @@ window.startQuiz = function() {
   showQ();
 }
 
-window.startWordSearch = function() { 
-  const board = document.getElementById('game-board');
-  let words = appData.words && appData.words.length > 0 ? appData.words : [{word:"AUTISM",clue:"Dev disorder"}];
-  let gameWords = words.sort(() => 0.5 - Math.random()).slice(0, 8);
-  const size = Math.max(10, Math.max(...gameWords.map(w=>w.word.length))+2);
-  let grid = Array(size).fill().map(() => Array(size).fill(''));
-  
-  gameWords.forEach(item => {
-    let w = item.word.toUpperCase().replace(/\s/g, '');
-    let placed=false, att=0;
-    while(!placed && att<100) {
-      let dir = Math.random()>0.5?'H':'V', r=Math.floor(Math.random()*size), c=Math.floor(Math.random()*size);
-      if(canPlace(grid,w,r,c,dir)) { placeWord(grid,w,r,c,dir); placed=true; }
-      att++;
-    }
-  });
-  
-  for(let r=0; r<size; r++) for(let c=0; c<size; c++) if(grid[r][c]==='') grid[r][c]=String.fromCharCode(65+Math.floor(Math.random()*26));
-  
-  let h = `<div class="word-grid" style="grid-template-columns:repeat(${size},1fr)">`;
-  grid.forEach(r => r.forEach(c => h+=`<div class="word-cell" onclick="this.style.background='var(--accent)'">${c}</div>`));
-  h += `</div><div style="margin-top:20px;text-align:left;"><h4>Find:</h4><ul>${gameWords.map(w=>`<li>${w.clue}</li>`).join('')}</ul></div>`;
-  h += `<button class="btn-details" style="margin-top:20px;width:100%;" onclick="finishGame(50,'Word Search')">Finish</button>`;
-  board.innerHTML = h;
-}
-function canPlace(g,w,r,c,d) { if(d==='H' && c+w.length>g.length) return false; if(d==='V' && r+w.length>g.length) return false; for(let i=0;i<w.length;i++) if(d==='H' && g[r][c+i]!=='' && g[r][c+i]!==w[i]) return false; else if(d==='V' && g[r+i][c]!=='' && g[r+i][c]!==w[i]) return false; return true; }
-function placeWord(g,w,r,c,d) { for(let i=0;i<w.length;i++) if(d==='H') g[r][c+i]=w[i]; else g[r+i][c]=w[i]; }
-
+// GAME: MEMORY
 window.startMemory = function() { 
   const board = document.getElementById('game-board');
   const icons = ['🧠','♿','❤️','🤝','🗣️','👂','👁️','🧩'];
   let cards = [...icons, ...icons].sort(() => 0.5 - Math.random());
-  let h = `<div class="memory-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-width:400px; margin:0 auto;">`;
-  cards.forEach((icon, i) => h+=`<div id="mem-${i}" onclick="flipCard(${i}, '${icon}')" style="aspect-ratio:1; background:var(--primary); border-radius:8px; cursor:pointer; display:grid; place-items:center; font-size:1.5rem; color:transparent;">${icon}</div>`);
+  let h = `<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-width:400px; margin:0 auto;">`;
+  cards.forEach((icon, i) => h+=`<div id="mem-${i}" onclick="flipCard(${i}, '${icon}')" style="aspect-ratio:1; background:var(--primary); border-radius:8px; cursor:pointer; display:grid; place-items:center; font-size:1.5rem; color:transparent; transition:all 0.3s;">${icon}</div>`);
   h += `</div>`;
   board.innerHTML = `<h3>Memory</h3>` + h;
 }
@@ -333,7 +332,7 @@ window.handleChat = function() {
   }, 500);
 }
 window.showFunFact = function() {
-  const facts = ["IDD includes 200+ conditions.", "Early intervention works.", "Inclusion benefits everyone."];
+  const facts = ["IDD includes 200+ conditions.", "Early intervention works.", "Inclusion benefits everyone.", "IDD is a natural part of human diversity."];
   const f = facts[Math.floor(Math.random()*facts.length)];
   document.getElementById('chat-body').innerHTML += `<div class="chat-bubble bot-msg">💡 <b>Did you know?</b> ${f}</div>`;
 }
@@ -372,28 +371,21 @@ function renderAppBackup() {
   document.getElementById('app-content').innerHTML = `<div style="text-align:center; padding:4rem;"><h3>Offline</h3><p>Check connection.</p><button onclick="window.location.reload()" class="btn-details">Retry</button></div>`;
 }
 
-// Theme & SW
+// --- THEME, SW, INSTALL, ZOOM ---
 function initTheme() { document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')); }
 window.toggleTheme = function() {
   const n = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', n); localStorage.setItem('theme', n);
 }
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(reg => {
-  if(reg.waiting) showUpdateToast(reg.waiting);
+  if(reg.waiting) showActionToast("Update Available", "Update", () => reg.waiting.postMessage({type:'SKIP_WAITING'}));
   reg.addEventListener('updatefound', () => {
     const n = reg.installing;
-    n.addEventListener('statechange', () => { if(n.state==='installed' && navigator.serviceWorker.controller) showUpdateToast(n); });
+    n.addEventListener('statechange', () => { if(n.state==='installed' && navigator.serviceWorker.controller) showActionToast("Update Available", "Update", () => n.postMessage({type:'SKIP_WAITING'})); });
   });
+  let ref; navigator.serviceWorker.addEventListener('controllerchange', () => { if(!ref) { window.location.reload(); ref=true; } });
 });
-function showUpdateToast(w) { showActionToast("Update Available", "Update", () => w.postMessage({type:'SKIP_WAITING'})); }
-navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
-
-// Install
-let deferredPrompt;
-const installBtn = document.getElementById('install-btn');
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'flex'; });
-installBtn.addEventListener('click', () => { installBtn.style.display='none'; deferredPrompt.prompt(); });
-
-// Viewers
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.deferredPrompt = e; document.getElementById('install-btn').style.display = 'block'; });
+document.getElementById('install-btn').onclick = () => { document.getElementById('install-btn').style.display='none'; window.deferredPrompt.prompt(); };
 window.openImageViewer = function(s) { document.getElementById('v-img').src=s; document.getElementById('image-viewer').classList.add('active'); }
 window.closeImageViewer = function() { document.getElementById('image-viewer').classList.remove('active'); }
