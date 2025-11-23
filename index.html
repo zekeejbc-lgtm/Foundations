@@ -37,15 +37,21 @@
         
         <button class="theme-switch" onclick="toggleTheme()" aria-label="Toggle Theme">
           <div class="theme-switch-handle">
-            <svg class="icon-svg sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-            <svg class="icon-svg moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            <!-- Sun SVG -->
+            <svg class="icon-svg sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <!-- Moon SVG -->
+            <svg class="icon-svg moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
           </div>
         </button>
       </nav>
     </div>
   </header>
 
-  <button id="install-btn" class="install-btn" style="display:none;"><span>⬇️</span> Install App</button>
+  <button id="install-btn" class="install-btn" style="display:none;">
+    <!-- Download Icon -->
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+    Install App
+  </button>
 
   <!-- Main Content -->
   <main id="app-content">
@@ -64,7 +70,7 @@
     </div>
   </footer>
 
-  <!-- Modals -->
+  <!-- Content Modal -->
   <div id="modal" class="modal">
     <div class="modal-box">
       <button class="close-btn" id="close-modal">&times;</button>
@@ -82,6 +88,7 @@
     </div>
   </div>
 
+  <!-- Profile Modal -->
   <div id="profile-modal" class="modal">
     <div class="modal-box profile-box">
       <button class="close-btn" id="close-profile">&times;</button>
@@ -95,23 +102,30 @@
     </div>
   </div>
 
+  <!-- Image Viewer -->
   <div id="image-viewer" class="image-viewer" onclick="closeImageViewer()">
     <img id="v-img" src="">
     <div class="viewer-hint">Tap anywhere to close</div>
   </div>
 
-  <!-- Chat & Fun Fact -->
-  <div class="chat-fab" onclick="toggleChat()">💬</div>
-  <div class="chat-fab fact-fab" onclick="showFunFact()">💡</div>
+  <!-- Chat FAB -->
+  <div class="chat-fab" onclick="toggleChat()">
+    <!-- Message Icon -->
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+  </div>
 
   <div id="chat-window" class="chat-window">
-    <div class="chat-header">IDD Assistant <span style="cursor:pointer" onclick="toggleChat()">✕</span></div>
+    <div class="chat-header">
+      <span>IDD Assistant</span>
+      <span style="cursor:pointer" onclick="toggleChat()">✕</span>
+    </div>
     <div class="chat-body" id="chat-body">
-      <div class="chat-bubble bot-msg">Hello! I can help answer questions about IDD based on our materials.</div>
+      <div class="chat-bubble bot-msg">Hello! Ask me about IDD or click below for a fun fact.</div>
+      <button class="chat-fact-btn" onclick="showFunFact()">💡 Tell me a Fun Fact</button>
     </div>
     <div class="chat-input-area">
       <input type="text" id="chat-input" class="chat-input" placeholder="Type here...">
-      <button onclick="handleChat()" class="btn-details" style="padding: 5px 10px;">➤</button>
+      <button onclick="handleChat()" class="btn-details" style="padding: 5px 12px;">➤</button>
     </div>
   </div>
 
