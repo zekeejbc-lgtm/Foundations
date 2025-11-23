@@ -13,8 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   playerName = localStorage.getItem('playerName') || "";
   
   updateNavState(cachedView);
-  console.log("Fetching...");
-  showToast("Connecting...");
+  console.log("System initializing...");
   
   fetchData();
   setInterval(checkForDataUpdates, 30000);
@@ -36,10 +35,8 @@ async function fetchData() {
       const isInitial = document.getElementById('app-content').innerHTML.includes('sk-box') || document.getElementById('app-content').innerHTML === "";
       
       if(isInitial) {
-        showToast("Loaded Successfully!");
         renderFooter(data.contacts);
         renderView(localStorage.getItem('currentView') || 'home');
-        
         const scroll = localStorage.getItem('scrollPos');
         if(scroll) setTimeout(() => window.scrollTo(0, parseInt(scroll)), 50);
       }
@@ -64,168 +61,100 @@ async function checkForDataUpdates() {
   } catch (e) {}
 }
 
-// --- NAV ---
-function renderView(view) {
-  const container = document.getElementById('app-content');
-  container.innerHTML = '';
-  if(!appData.content) return; 
-
-  if(view === 'home') renderHome(container);
-  else if(view === 'members') renderTeam(container);
-  else if(view === 'games') renderGamesHub(container);
+// --- SMART CHATBOT LOGIC (AI) ---
+window.toggleChat = function() {
+  const c = document.getElementById('chat-window');
+  c.style.display = c.style.display === 'flex' ? 'none' : 'flex';
+  // Auto focus input
+  if(c.style.display === 'flex') document.getElementById('chat-input').focus();
 }
 
-window.switchView = function(view) {
-  localStorage.setItem('currentView', view);
-  updateNavState(view);
-  renderView(view);
-  window.scrollTo(0, 0);
-}
-
-function updateNavState(view) {
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('nav-' + view);
-  if(btn) btn.classList.add('active');
-}
-
-// --- RENDERERS ---
-function renderHome(container) {
-  let html = '';
-  const videoItem = appData.content.find(i => i.type && i.type.toLowerCase() === 'advocacy');
-  const cards = appData.content.filter(i => !i.type || i.type.toLowerCase() !== 'advocacy');
-
-  if(videoItem) {
-    const vidHtml = getMediaHtml(videoItem.url, 'video', false);
-    html += `
-      <div class="hero-section">
-        <div class="hero-video">${vidHtml}</div>
-        <h2 class="hero-title">${videoItem.title}</h2>
-        <div class="hero-desc-card">
-          <div class="hero-desc">${videoItem.desc}</div>
-        </div>
-      </div>
-      <div class="section-header"><h2 class="section-title">Awareness Materials</h2></div>
-    `;
-  }
-
-  html += `<div class="group-card-holder"><div class="grid">`;
-  cards.forEach(item => {
-    const type = item.type ? item.type.toLowerCase() : 'image';
-    const media = getMediaHtml(item.url, type, false);
-    const overlay = type !== 'video' ? `<div class="img-overlay"></div>` : '';
-    const itemData = encodeData(item);
-
-    html += `
-      <div class="card">
-        <div class="card-media">${media}${overlay}</div>
-        <div class="card-content">
-          <h3 class="card-title" onclick='openModal(${itemData})'>${item.title}</h3>
-          <div class="card-desc">${item.desc}</div>
-          <button class="btn-details" onclick='openModal(${itemData})'>Read Details</button>
-        </div>
-      </div>
-    `;
-  });
-  html += `</div></div>`;
-  container.innerHTML = html;
+window.handleChat = function() {
+  const inp = document.getElementById('chat-input');
+  const txt = inp.value.trim().toLowerCase();
+  const b = document.getElementById('chat-body');
   
-  container.querySelectorAll('.img-overlay').forEach(el => {
-    el.onclick = function() { this.parentElement.nextElementSibling.querySelector('button').click(); };
-  });
-}
-
-function renderTeam(container) {
-  let html = '';
-  if (!appData.profiles || appData.profiles.length === 0) {
-    container.innerHTML = "<div style='text-align:center; padding:2rem;'><h3>No Profiles Found</h3></div>";
-    return;
-  }
-  const instructor = appData.profiles.find(p => p.role && p.role.toLowerCase() === 'instructor');
-  const members = appData.profiles.filter(p => !p.role || p.role.toLowerCase() !== 'instructor');
-
-  if(instructor) {
-    const iImg = getSmartImg(instructor.imgUrl);
-    const iData = encodeData(instructor);
-    html += `
-      <div class="instructor-card" onclick='openProfile(${iData})'>
-        <img src="${iImg}" class="inst-img">
-        <h3 class="inst-name">${instructor.name}</h3>
-        <div class="inst-role">${instructor.program}</div>
-        <p style="font-size:0.9rem; opacity:0.8;">${instructor.shortDesc}</p>
-        <button class="btn-details" style="margin-top:10px;">View Profile</button>
-      </div>
-      <div class="section-header"><h2 class="section-title">Our Team</h2></div>
-    `;
-  }
-
-  html += `<div class="group-card-holder"><div class="member-grid">`;
-  members.forEach(m => {
-    const mImg = getSmartImg(m.imgUrl);
-    const mData = encodeData(m);
-    html += `
-      <div class="member-card" onclick='openProfile(${mData})'>
-        <img src="${mImg}" class="mem-img">
-        <h3 class="mem-name">${m.name}</h3>
-        <div class="mem-program">${m.role}</div>
-        <button class="btn-details" style="margin-top:auto;">Profile</button>
-      </div>
-    `;
-  });
-  html += `</div></div>`;
-  container.innerHTML = html;
-}
-
-// --- GAME ENGINE (FIXED GRID) ---
-function renderGamesHub(container) {
-  if(!playerName) {
-    container.innerHTML = `
-      <div style="text-align:center; padding:4rem 1rem;">
-        <h2 class="hero-title">Enter Your Name</h2>
-        <input type="text" id="p-name-input" placeholder="Your Name" style="padding:12px; border-radius:20px; border:1px solid #ccc; width:80%; margin-bottom:1rem; font-size:1rem;">
-        <br><button class="btn-details" onclick="saveName()">Start Playing</button>
-      </div>`;
-    return;
-  }
+  if(!txt) return;
   
-  let lbHtml = `<div class="leaderboard-box"><h3>🏆 Top 5 Leaderboard</h3>`;
-  if(appData.leaderboard) {
-    appData.leaderboard.forEach(p => {
-      lbHtml += `<div class="lb-row"><span class="lb-name">${p.name}</span><span>${p.score} pts <small>(${p.game})</small></span></div>`;
-    });
-  }
-  lbHtml += `</div>`;
+  // 1. Display User Message
+  b.innerHTML += `<div class="chat-bubble user-msg">${inp.value}</div>`;
+  inp.value = '';
+  b.scrollTop = b.scrollHeight; // Scroll to bottom
 
-  container.innerHTML = `
-    <div class="game-container">
-      <h2 class="section-title">Learning Games</h2>
-      <p style="margin-bottom:2rem;">Welcome, <b>${playerName}</b>! <a href="#" onclick="clearName()" style="color:var(--primary); font-size:0.8rem;">(Change)</a></p>
-      ${lbHtml}
-      <div class="game-menu">
-        <button class="game-btn" onclick="startWordSearch()">🧩 Word Search</button>
-        <button class="game-btn" onclick="startQuiz()">❓ Quiz</button>
-        <button class="game-btn" onclick="startMemory()">🧠 Memory</button>
-      </div>
-      <div id="game-board" style="background:var(--card-bg); padding:2rem; border-radius:20px; border:1px solid var(--border); min-height:300px; max-width:800px; margin:0 auto;">
-        <p style="color:var(--text-sub);">Select a game to start playing!</p>
-      </div>
-    </div>
-  `;
+  // 2. Process Logic (The "AI")
+  setTimeout(() => {
+    let response = "";
+
+    // A. CHECK TEAM INTENT
+    if(txt.includes('team') || txt.includes('who') || txt.includes('people') || txt.includes('creator') || txt.includes('developer')) {
+      if(appData.profiles && appData.profiles.length > 0) {
+        let teamList = appData.profiles.map(p => `• <b>${p.name}</b> (${p.role})`).join('<br>');
+        response = `Here are the people behind this project:<br><br>${teamList}`;
+      } else {
+        response = "I couldn't retrieve the team list right now.";
+      }
+    }
+    // B. CHECK GAME INTENT
+    else if(txt.includes('game') || txt.includes('play') || txt.includes('quiz')) {
+      response = `We have learning games available! Go to the <a href="#" onclick="switchView('games'); toggleChat()" style="color:var(--primary); text-decoration:underline;">Games Tab</a> to play Word Search, Quiz, or Memory Match.`;
+    }
+    // C. CHECK DATABASE CONTENT (Full Search)
+    else if(appData.content) {
+      // Search Title and Description
+      const match = appData.content.find(i => 
+        i.title.toLowerCase().includes(txt) || 
+        i.desc.toLowerCase().includes(txt)
+      );
+
+      if(match) {
+        // Found! Show Title + FULL Description + Link if available
+        response = `<b>Found: ${match.title}</b><br><br>${match.desc}`;
+        if(match.url && !match.url.includes('placeholder')) {
+          response += `<br><br><a href="${match.url}" target="_blank" style="color:var(--accent); font-weight:bold;">View Resource</a>`;
+        }
+      } else {
+        // Not Found
+        response = `I couldn't find specific information about "${txt}" in our database.<br><br>I have saved your question as a suggestion for our team to add later!`;
+        // Send to Backend
+        fetch(API_URL, { method:'POST', mode:'no-cors', body:JSON.stringify({action:'submit_suggestion', text:txt}) });
+      }
+    } else {
+      response = "I'm having trouble accessing the database. Please check your connection.";
+    }
+
+    // 3. Display Bot Response
+    b.innerHTML += `<div class="chat-bubble bot-msg">${response}</div>`;
+    b.scrollTop = b.scrollHeight;
+
+  }, 600); // Fake "thinking" delay
 }
 
-window.saveName = function() {
-  const val = document.getElementById('p-name-input').value;
-  if(val) { playerName = val; localStorage.setItem('playerName', val); renderGamesHub(document.getElementById('app-content')); }
+window.showFunFact = function() {
+  const facts = [
+    "Intellectual disability is characterized by significant limitations in both intellectual functioning and adaptive behavior.",
+    "Early intervention services can greatly improve a child's development.",
+    "People with IDD can live independent, productive lives with the right support.",
+    "There are over 200 known causes of IDD, including genetic conditions and issues during pregnancy.",
+    "Inclusion in education benefits both students with disabilities and those without."
+  ];
+  const f = facts[Math.floor(Math.random()*facts.length)];
+  const b = document.getElementById('chat-body');
+  b.innerHTML += `<div class="chat-bubble bot-msg">💡 <b>Did you know?</b><br>${f}</div>`;
+  b.scrollTop = b.scrollHeight;
 }
-window.clearName = function() { localStorage.removeItem('playerName'); playerName = ""; renderGamesHub(document.getElementById('app-content')); }
 
-// GAME: WORD SEARCH (FIXED)
+// --- GAME ENGINE (RESPONSIVE) ---
+
+// 1. WORD SEARCH
 window.startWordSearch = function() { 
   const board = document.getElementById('game-board');
   let words = appData.words && appData.words.length > 0 ? appData.words : [{word:"AUTISM",clue:"Dev disorder"}];
-  let gameWords = words.sort(() => 0.5 - Math.random()).slice(0, 8);
+  // Limit to 6 words for mobile fitting
+  let gameWords = words.sort(() => 0.5 - Math.random()).slice(0, 6);
   
-  // Dynamic Grid Size
-  const size = Math.max(10, Math.max(...gameWords.map(w=>w.word.length))+2);
+  // Calculate Grid Size based on longest word
+  const longest = Math.max(...gameWords.map(w=>w.word.length));
+  const size = Math.max(8, longest + 1); // Keep grid tight
   let grid = Array(size).fill().map(() => Array(size).fill(''));
   
   gameWords.forEach(item => {
@@ -240,27 +169,34 @@ window.startWordSearch = function() {
   
   for(let r=0; r<size; r++) for(let c=0; c<size; c++) if(grid[r][c]==='') grid[r][c]=String.fromCharCode(65+Math.floor(Math.random()*26));
   
-  // *** KEY FIX: Inline Style for Grid Columns ***
+  // Responsive Grid Style
   let h = `<div class="word-grid" style="grid-template-columns:repeat(${size}, 1fr);">`;
   grid.forEach(r => r.forEach(c => h+=`<div class="word-cell" onclick="this.style.background='var(--accent)'; this.style.color='#781d22'">${c}</div>`));
-  h += `</div><div style="margin-top:20px;text-align:left;"><h4>Find:</h4><ul>${gameWords.map(w=>`<li>${w.clue}</li>`).join('')}</ul></div>`;
-  h += `<button class="btn-details" style="margin-top:20px;width:100%;" onclick="finishGame(50,'Word Search')">Finish</button>`;
+  h += `</div><div style="margin-top:20px;text-align:left;"><h4>Find these words:</h4><ul style="font-size:0.9rem;">${gameWords.map(w=>`<li>${w.clue}</li>`).join('')}</ul></div>`;
+  h += `<button class="btn-details" style="margin-top:20px;width:100%;" onclick="finishGame(50,'Word Search')">I Found Them!</button>`;
   board.innerHTML = h;
 }
 function canPlace(g,w,r,c,d) { if(d==='H' && c+w.length>g.length) return false; if(d==='V' && r+w.length>g.length) return false; for(let i=0;i<w.length;i++) if(d==='H' && g[r][c+i]!=='' && g[r][c+i]!==w[i]) return false; else if(d==='V' && g[r+i][c]!=='' && g[r+i][c]!==w[i]) return false; return true; }
 function placeWord(g,w,r,c,d) { for(let i=0;i<w.length;i++) if(d==='H') g[r][c+i]=w[i]; else g[r+i][c]=w[i]; }
 
-// GAME: QUIZ
+// 2. QUIZ
 window.startQuiz = function() {
   const board = document.getElementById('game-board');
-  if(!appData.quiz || appData.quiz.length === 0) { board.innerHTML = "No questions."; return; }
+  if(!appData.quiz || appData.quiz.length === 0) { board.innerHTML = "No questions loaded."; return; }
   let qList = [...appData.quiz].sort(() => 0.5 - Math.random()).slice(0, 10);
   let score = 0, idx = 0;
+  
   function showQ() {
     if(idx >= qList.length) { finishGame(score, "Quiz"); return; }
     const q = qList[idx];
-    board.innerHTML = `<h3>Q ${idx+1} / ${qList.length}</h3><p style="font-size:1.2rem; margin:1.5rem 0;">${q.q}</p>
-    <div style="display:grid; gap:10px;">${q.opt.map(o => `<button onclick="checkAns(this, '${o.replace(/'/g,"\\'")}', '${q.ans.replace(/'/g,"\\'")}')" class="quiz-opt">${o}</button>`).join('')}</div>`;
+    board.innerHTML = `
+      <div class="quiz-box">
+        <h3 style="color:var(--primary);">Question ${idx+1} / ${qList.length}</h3>
+        <p style="font-size:1.1rem; font-weight:600; margin:1.5rem 0;">${q.q}</p>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          ${q.opt.map(o => `<button onclick="checkAns(this, '${o.replace(/'/g,"\\'")}', '${q.ans.replace(/'/g,"\\'")}')" class="quiz-opt">${o}</button>`).join('')}
+        </div>
+      </div>`;
   }
   window.checkAns = function(btn, ch, cor) {
     board.querySelectorAll('button').forEach(b => b.disabled = true);
@@ -271,22 +207,22 @@ window.startQuiz = function() {
   showQ();
 }
 
-// GAME: MEMORY
+// 3. MEMORY
 window.startMemory = function() { 
   const board = document.getElementById('game-board');
   const icons = ['🧠','♿','❤️','🤝','🗣️','👂','👁️','🧩'];
   let cards = [...icons, ...icons].sort(() => 0.5 - Math.random());
-  let h = `<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-width:400px; margin:0 auto;">`;
-  cards.forEach((icon, i) => h+=`<div id="mem-${i}" onclick="flipCard(${i}, '${icon}')" style="aspect-ratio:1; background:var(--primary); border-radius:8px; cursor:pointer; display:grid; place-items:center; font-size:1.5rem; color:transparent; transition:all 0.3s;">${icon}</div>`);
+  let h = `<div class="memory-grid">`;
+  cards.forEach((icon, i) => h+=`<div class="memory-card" id="mem-${i}" onclick="flipCard(${i}, '${icon}')">${icon}</div>`);
   h += `</div>`;
-  board.innerHTML = `<h3>Memory</h3>` + h;
+  board.innerHTML = `<h3>Memory Match</h3>` + h;
 }
 let fC=null, lB=false, mC=0;
 window.flipCard = function(id, ic) {
   if(lB) return;
   const el = document.getElementById('mem-'+id);
-  if(el.style.background === 'white') return;
-  el.style.background='white'; el.style.color='black'; el.style.border='2px solid var(--accent)';
+  if(el.classList.contains('flipped')) return;
+  el.classList.add('flipped');
   if(!fC) fC = {id, ic};
   else {
     if(fC.id === id) return;
@@ -294,98 +230,70 @@ window.flipCard = function(id, ic) {
     if(fC.ic === ic) { mC++; fC=null; lB=false; if(mC===8) finishGame(100, "Memory"); }
     else {
       setTimeout(() => {
-        const p = document.getElementById('mem-'+fC.id);
-        p.style.background='var(--primary)'; p.style.color='transparent'; p.style.border='none';
-        el.style.background='var(--primary)'; el.style.color='transparent'; el.style.border='none';
+        document.getElementById('mem-'+fC.id).classList.remove('flipped');
+        el.classList.remove('flipped');
         fC=null; lB=false;
       }, 1000);
     }
   }
 }
 
+// --- COMMON ---
 function finishGame(s, g) {
   showToast(`Score: ${s}`);
-  document.getElementById('game-board').innerHTML = `<h3>Good Job!</h3><p>Score: ${s}</p><button class="btn-details" onclick="renderGamesHub(document.getElementById('app-content'))">Back</button>`;
+  document.getElementById('game-board').innerHTML = `
+    <div style="text-align:center; padding:3rem;">
+      <h2 style="color:var(--primary);">🎉 Great Job!</h2>
+      <p>You scored <b>${s}</b> points in ${g}.</p>
+      <button class="btn-details" onclick="renderGamesHub(document.getElementById('app-content'))">Play Again</button>
+    </div>
+  `;
   fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'submit_score', name: playerName, score: s, game: g }) });
 }
 
-// --- CHAT & FACTS ---
-window.toggleChat = function() {
-  const c = document.getElementById('chat-window');
-  c.style.display = c.style.display === 'flex' ? 'none' : 'flex';
-}
-window.handleChat = function() {
-  const inp = document.getElementById('chat-input');
-  const txt = inp.value.toLowerCase();
-  const b = document.getElementById('chat-body');
-  if(!txt) return;
-  b.innerHTML += `<div class="chat-bubble user-msg">${inp.value}</div>`;
-  inp.value = '';
-  let found = appData.content ? appData.content.find(i => i.title.toLowerCase().includes(txt) || i.desc.toLowerCase().includes(txt)) : null;
-  setTimeout(() => {
-    if(found) b.innerHTML += `<div class="chat-bubble bot-msg">Found: <b>${found.title}</b><br>${found.desc.substring(0,100)}...</div>`;
-    else { 
-      b.innerHTML += `<div class="chat-bubble bot-msg">Not found. I'll suggest this topic to the team.</div>`; 
-      fetch(API_URL, { method:'POST', mode:'no-cors', body:JSON.stringify({action:'submit_suggestion', text:txt}) });
-    }
-    b.scrollTop = b.scrollHeight;
-  }, 500);
-}
-window.showFunFact = function() {
-  const facts = ["IDD includes 200+ conditions.", "Early intervention works.", "Inclusion benefits everyone.", "IDD is a natural part of human diversity."];
-  const f = facts[Math.floor(Math.random()*facts.length)];
-  document.getElementById('chat-body').innerHTML += `<div class="chat-bubble bot-msg">💡 <b>Did you know?</b> ${f}</div>`;
-}
+// --- RENDERERS & REST OF LOGIC (Keep your existing Render Functions) ---
+// Please ensure you include the renderHome, renderTeam, renderGamesHub, etc. logic here.
+// I will include the renderGamesHub here as it was part of the update.
 
-// --- UTILS ---
-function renderFooter(contacts) {
-  const f = document.getElementById('footer-target');
-  f.innerHTML = (contacts||[]).map(c => `<div class="footer-col"><h4>${c.title}</h4><p>${c.desc.replace(/\n/g,'<br>')}</p>${c.link?`<a href="${c.link}" target="_blank">Open Link</a>`:''}</div>`).join('');
-}
-function getSmartImg(url) {
-  if(!url) return 'https://via.placeholder.com/150?text=No+Img';
-  const m = url.match(/[-\w]{25,}/);
-  return (url.includes("drive.google.com") && m) ? `https://drive.google.com/uc?export=view&id=${m[0]}` : url;
-}
-function getMediaHtml(url, type, auto) {
-  if (!url) return '';
-  type = type ? type.toLowerCase() : 'image';
-  const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
-  if(yt) return `<iframe src="https://www.youtube.com/embed/${yt[1]}?modestbranding=1&rel=0${auto?'&autoplay=1':''}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-  if(type==='video'||type==='advocacy') {
-    const m = url.match(/[-\w]{25,}/);
-    if(m && url.includes("drive")) return `<iframe src="https://drive.google.com/file/d/${m[0]}/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+function renderGamesHub(container) {
+  if(!playerName) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:4rem 1rem;">
+        <h2 class="hero-title">Enter Your Name</h2>
+        <input type="text" id="p-name-input" placeholder="Your Name" style="padding:12px; border-radius:20px; border:1px solid #ccc; width:80%; margin-bottom:1rem; font-size:1rem;">
+        <br><button class="btn-details" onclick="saveName()">Start Playing</button>
+      </div>`;
+    return;
   }
-  return `<img src="${getSmartImg(url)}" onclick="openImageViewer(this.src)" style="cursor:zoom-in">`;
-}
-function encodeData(o) { return JSON.stringify(o).replace(/'/g, "&apos;").replace(/"/g, "&quot;"); }
-function showToast(m) {
-  const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000);
-}
-function showActionToast(m, b, cb) {
-  const t = document.getElementById('toast');
-  t.innerHTML = `<span>${m}</span><button id="ta" class="toast-btn">${b}</button>`; t.classList.add('show');
-  document.getElementById('ta').onclick = () => { t.classList.remove('show'); cb(); };
-}
-function renderAppBackup() {
-  document.getElementById('app-content').innerHTML = `<div style="text-align:center; padding:4rem;"><h3>Offline</h3><p>Check connection.</p><button onclick="window.location.reload()" class="btn-details">Retry</button></div>`;
+  let lbHtml = `<div class="leaderboard-box"><h3>🏆 Top 5 Leaderboard</h3>`;
+  if(appData.leaderboard) {
+    appData.leaderboard.forEach(p => {
+      lbHtml += `<div class="lb-row"><span class="lb-name">${p.name}</span><span>${p.score} pts <small>(${p.game})</small></span></div>`;
+    });
+  }
+  lbHtml += `</div>`;
+
+  container.innerHTML = `
+    <div class="game-container">
+      <h2 class="section-title">Learning Games</h2>
+      <p style="margin-bottom:2rem;">Welcome, <b>${playerName}</b>! <a href="#" onclick="clearName()" style="color:var(--primary); font-size:0.8rem;">(Change)</a></p>
+      ${lbHtml}
+      <div class="game-menu">
+        <button class="game-btn" onclick="startWordSearch()">🧩 Word Puzzle</button>
+        <button class="game-btn" onclick="startQuiz()">❓ Quiz</button>
+        <button class="game-btn" onclick="startMemory()">🧠 Memory</button>
+      </div>
+      <div id="game-board">
+        <p style="color:var(--text-sub); padding:2rem;">Select a game to start playing!</p>
+      </div>
+    </div>
+  `;
 }
 
-// --- THEME, SW, INSTALL, ZOOM ---
-function initTheme() { document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')); }
-window.toggleTheme = function() {
-  const n = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', n); localStorage.setItem('theme', n);
+window.saveName = function() {
+  const val = document.getElementById('p-name-input').value;
+  if(val) { playerName = val; localStorage.setItem('playerName', val); renderGamesHub(document.getElementById('app-content')); }
 }
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(reg => {
-  if(reg.waiting) showActionToast("Update Available", "Update", () => reg.waiting.postMessage({type:'SKIP_WAITING'}));
-  reg.addEventListener('updatefound', () => {
-    const n = reg.installing;
-    n.addEventListener('statechange', () => { if(n.state==='installed' && navigator.serviceWorker.controller) showActionToast("Update Available", "Update", () => n.postMessage({type:'SKIP_WAITING'})); });
-  });
-  let ref; navigator.serviceWorker.addEventListener('controllerchange', () => { if(!ref) { window.location.reload(); ref=true; } });
-});
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.deferredPrompt = e; document.getElementById('install-btn').style.display = 'block'; });
-document.getElementById('install-btn').onclick = () => { document.getElementById('install-btn').style.display='none'; window.deferredPrompt.prompt(); };
-window.openImageViewer = function(s) { document.getElementById('v-img').src=s; document.getElementById('image-viewer').classList.add('active'); }
-window.closeImageViewer = function() { document.getElementById('image-viewer').classList.remove('active'); }
+window.clearName = function() { localStorage.removeItem('playerName'); playerName = ""; renderGamesHub(document.getElementById('app-content')); }
+
+// ... (INCLUDE THE REST: renderHome, renderTeam, nav functions, etc. from previous working code) ...
