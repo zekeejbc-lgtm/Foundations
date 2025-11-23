@@ -1,4 +1,4 @@
-const CACHE_NAME = 'idd-usep-v7-final';
+const CACHE_NAME = 'idd-usep-v8-absolute-final';
 const ASSETS = [
   '/',
   '/index.html',
@@ -25,15 +25,16 @@ self.addEventListener('fetch', event => {
   const req = event.request;
   const url = new URL(req.url);
   
+  // API: Network First (Get fresh data), fallback to Cache
   if (url.href.includes('script.google.com')) {
-    // API: Network First -> Cache Fallback
     event.respondWith(fetch(req).then(res => {
       const clone = res.clone();
       caches.open(CACHE_NAME).then(c => c.put(req, clone));
       return res;
     }).catch(() => caches.match(req)));
-  } else {
-    // Assets: Cache First -> Network Fallback
+  } 
+  // Static Assets: Cache First (Fast load), fallback to Network
+  else {
     event.respondWith(caches.match(req).then(res => res || fetch(req)));
   }
 });
