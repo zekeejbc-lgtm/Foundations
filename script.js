@@ -1,7 +1,6 @@
 // ----------------------------------------------------
-// PASTE YOUR NEW GOOGLE SCRIPT URL HERE
-// ----------------------------------------------------
-const API_URL = "PASTE_YOUR_NEW_URL_HERE"; 
+// 🔴 PASTE YOUR GOOGLE APPS SCRIPT URL HERE 🔴
+const API_URL = "https://script.google.com/macros/s/AKfycbxe4e9qXtRv5caC_oMtcwZsdrkJc4oQ8aNrZWBvMAkOlFAtcLHUKyuhQ66uNLPz8wNE/exec"; 
 // ----------------------------------------------------
 
 let appData = {};
@@ -27,27 +26,22 @@ window.addEventListener('beforeunload', () => localStorage.setItem('scrollPos', 
 async function fetchData() {
   try {
     const response = await fetch(API_URL + "?t=" + new Date().getTime());
-    if (!response.ok) throw new Error(`Status: ${response.status}`);
+    if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
     const data = await response.json();
 
     if(data.status === 'success' || data.status === 'partial_error') {
       currentDataHash = JSON.stringify(data);
       appData = data;
       
-      const isInitial = document.getElementById('app-content').innerHTML.includes('Loading') || 
-                        document.getElementById('app-content').innerHTML.includes('sk-box');
+      showToast("Loaded Successfully!");
+      renderFooter(data.contacts);
+      renderView(localStorage.getItem('currentView') || 'home');
       
-      if(isInitial) {
-        showToast("Loaded Successfully!");
-        renderFooter(data.contacts);
-        renderView(localStorage.getItem('currentView') || 'home');
-        
-        const scroll = localStorage.getItem('scrollPos');
-        if(scroll) setTimeout(() => window.scrollTo(0, parseInt(scroll)), 50);
-      }
-    } else { throw new Error(data.message); }
+      const scroll = localStorage.getItem('scrollPos');
+      if(scroll) setTimeout(() => window.scrollTo(0, parseInt(scroll)), 50);
+    } else { throw new Error("API Error: " + data.message); }
   } catch (err) {
-    console.error(err);
+    console.error("Fetch Failed:", err);
     showToast("Offline Mode Active");
     if(!appData.content) renderAppBackup();
   }
@@ -66,7 +60,7 @@ async function checkForDataUpdates() {
   } catch (e) {}
 }
 
-// --- NAV ---
+// --- NAVIGATION ---
 function renderView(view) {
   const container = document.getElementById('app-content');
   container.innerHTML = '';
@@ -130,6 +124,7 @@ function renderHome(container) {
   });
   html += `</div></div>`;
   container.innerHTML = html;
+  
   container.querySelectorAll('.img-overlay').forEach(el => {
     el.onclick = function() { this.parentElement.nextElementSibling.querySelector('button').click(); };
   });
@@ -138,8 +133,12 @@ function renderHome(container) {
 // --- RENDER TEAM ---
 function renderTeam(container) {
   let html = '';
-  const instructor = appData.profiles ? appData.profiles.find(p => p.role && p.role.toLowerCase() === 'instructor') : null;
-  const members = appData.profiles ? appData.profiles.filter(p => !p.role || p.role.toLowerCase() !== 'instructor') : [];
+  if (!appData.profiles || appData.profiles.length === 0) {
+    container.innerHTML = "<div style='text-align:center; padding:2rem;'><h3>No Profiles Found</h3></div>";
+    return;
+  }
+  const instructor = appData.profiles.find(p => p.role && p.role.toLowerCase() === 'instructor');
+  const members = appData.profiles.filter(p => !p.role || p.role.toLowerCase() !== 'instructor');
 
   if(instructor) {
     const iImg = getSmartImg(instructor.imgUrl);
@@ -173,13 +172,13 @@ function renderTeam(container) {
   container.innerHTML = html;
 }
 
-// --- GAMES & CHAT LOGIC (Consolidated) ---
+// --- GAMES HUB ---
 function renderGamesHub(container) {
   if(!playerName) {
     container.innerHTML = `
       <div style="text-align:center; padding:4rem 1rem;">
         <h2 class="hero-title">Enter Your Name</h2>
-        <input type="text" id="p-name-input" placeholder="Your Name" style="padding:12px; border-radius:20px; border:1px solid #ccc; width:80%; margin-bottom:1rem;">
+        <input type="text" id="p-name-input" placeholder="Your Name" style="padding:12px; border-radius:20px; border:1px solid #ccc; width:80%; margin-bottom:1rem; font-size:1rem;">
         <br><button class="btn-details" onclick="saveName()">Start Playing</button>
       </div>`;
     return;
@@ -199,9 +198,18 @@ function renderGamesHub(container) {
       <p style="margin-bottom:2rem;">Welcome, <b>${playerName}</b>! <a href="#" onclick="clearName()" style="color:var(--primary); font-size:0.8rem;">(Change)</a></p>
       ${lbHtml}
       <div class="game-menu">
-        <button class="game-btn" onclick="startWordSearch()">🧩 Word Search</button>
-        <button class="game-btn" onclick="startQuiz()">❓ Quiz</button>
-        <button class="game-btn" onclick="startMemory()">🧠 Memory</button>
+        <button class="game-btn" onclick="startWordSearch()">
+          <svg class="icon-svg" style="width:24px;height:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
+          Word Puzzle
+        </button>
+        <button class="game-btn" onclick="startQuiz()">
+          <svg class="icon-svg" style="width:24px;height:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+          Quiz
+        </button>
+        <button class="game-btn" onclick="startMemory()">
+          <svg class="icon-svg" style="width:24px;height:24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20"/><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M4 12V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5"/></svg>
+          Memory
+        </button>
       </div>
       <div id="game-board" style="background:var(--card-bg); padding:2rem; border-radius:20px; border:1px solid var(--border); min-height:300px; max-width:800px; margin:0 auto;">
         <p style="color:var(--text-sub);">Select a game to start playing!</p>
@@ -216,7 +224,7 @@ window.saveName = function() {
 }
 window.clearName = function() { localStorage.removeItem('playerName'); playerName = ""; renderGamesHub(document.getElementById('app-content')); }
 
-// Game Engines (Condensed)
+// --- GAMES LOGIC ---
 window.startQuiz = function() {
   const board = document.getElementById('game-board');
   if(!appData.quiz || appData.quiz.length === 0) { board.innerHTML = "No questions."; return; }
@@ -237,13 +245,63 @@ window.startQuiz = function() {
   showQ();
 }
 
-window.startWordSearch = function() { /* ... (Same logic as previous, check length constraints) ... */ 
-  // Simplified for brevity:
-  document.getElementById('game-board').innerHTML = "<h3>Word Search</h3><p>Logic loaded. (See previous implementation for full grid code)</p><button class='btn-details' onclick='finishGame(50, \"WordSearch\")'>Finish</button>";
+window.startWordSearch = function() { 
+  const board = document.getElementById('game-board');
+  let words = appData.words && appData.words.length > 0 ? appData.words : [{word:"AUTISM",clue:"Dev disorder"}];
+  let gameWords = words.sort(() => 0.5 - Math.random()).slice(0, 8);
+  const size = Math.max(10, Math.max(...gameWords.map(w=>w.word.length))+2);
+  let grid = Array(size).fill().map(() => Array(size).fill(''));
+  
+  gameWords.forEach(item => {
+    let w = item.word.toUpperCase().replace(/\s/g, '');
+    let placed=false, att=0;
+    while(!placed && att<100) {
+      let dir = Math.random()>0.5?'H':'V', r=Math.floor(Math.random()*size), c=Math.floor(Math.random()*size);
+      if(canPlace(grid,w,r,c,dir)) { placeWord(grid,w,r,c,dir); placed=true; }
+      att++;
+    }
+  });
+  
+  for(let r=0; r<size; r++) for(let c=0; c<size; c++) if(grid[r][c]==='') grid[r][c]=String.fromCharCode(65+Math.floor(Math.random()*26));
+  
+  let h = `<div class="word-grid" style="grid-template-columns:repeat(${size},1fr)">`;
+  grid.forEach(r => r.forEach(c => h+=`<div class="word-cell" onclick="this.style.background='var(--accent)'">${c}</div>`));
+  h += `</div><div style="margin-top:20px;text-align:left;"><h4>Find:</h4><ul>${gameWords.map(w=>`<li>${w.clue}</li>`).join('')}</ul></div>`;
+  h += `<button class="btn-details" style="margin-top:20px;width:100%;" onclick="finishGame(50,'Word Search')">Finish</button>`;
+  board.innerHTML = h;
 }
+function canPlace(g,w,r,c,d) { if(d==='H' && c+w.length>g.length) return false; if(d==='V' && r+w.length>g.length) return false; for(let i=0;i<w.length;i++) if(d==='H' && g[r][c+i]!=='' && g[r][c+i]!==w[i]) return false; else if(d==='V' && g[r+i][c]!=='' && g[r+i][c]!==w[i]) return false; return true; }
+function placeWord(g,w,r,c,d) { for(let i=0;i<w.length;i++) if(d==='H') g[r][c+i]=w[i]; else g[r+i][c]=w[i]; }
 
-window.startMemory = function() { /* ... (Same logic as previous) ... */ 
-  document.getElementById('game-board').innerHTML = "<h3>Memory</h3><p>Logic loaded.</p><button class='btn-details' onclick='finishGame(50, \"Memory\")'>Finish</button>";
+window.startMemory = function() { 
+  const board = document.getElementById('game-board');
+  const icons = ['🧠','♿','❤️','🤝','🗣️','👂','👁️','🧩'];
+  let cards = [...icons, ...icons].sort(() => 0.5 - Math.random());
+  let h = `<div class="memory-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-width:400px; margin:0 auto;">`;
+  cards.forEach((icon, i) => h+=`<div id="mem-${i}" onclick="flipCard(${i}, '${icon}')" style="aspect-ratio:1; background:var(--primary); border-radius:8px; cursor:pointer; display:grid; place-items:center; font-size:1.5rem; color:transparent;">${icon}</div>`);
+  h += `</div>`;
+  board.innerHTML = `<h3>Memory</h3>` + h;
+}
+let fC=null, lB=false, mC=0;
+window.flipCard = function(id, ic) {
+  if(lB) return;
+  const el = document.getElementById('mem-'+id);
+  if(el.style.background === 'white') return;
+  el.style.background='white'; el.style.color='black'; el.style.border='2px solid var(--accent)';
+  if(!fC) fC = {id, ic};
+  else {
+    if(fC.id === id) return;
+    lB=true;
+    if(fC.ic === ic) { mC++; fC=null; lB=false; if(mC===8) finishGame(100, "Memory"); }
+    else {
+      setTimeout(() => {
+        const p = document.getElementById('mem-'+fC.id);
+        p.style.background='var(--primary)'; p.style.color='transparent'; p.style.border='none';
+        el.style.background='var(--primary)'; el.style.color='transparent'; el.style.border='none';
+        fC=null; lB=false;
+      }, 1000);
+    }
+  }
 }
 
 function finishGame(s, g) {
@@ -252,7 +310,7 @@ function finishGame(s, g) {
   fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'submit_score', name: playerName, score: s, game: g }) });
 }
 
-// Chat & Fact
+// --- CHAT & FACTS ---
 window.toggleChat = function() {
   const c = document.getElementById('chat-window');
   c.style.display = c.style.display === 'flex' ? 'none' : 'flex';
@@ -276,10 +334,15 @@ window.handleChat = function() {
 }
 window.showFunFact = function() {
   const facts = ["IDD includes 200+ conditions.", "Early intervention works.", "Inclusion benefits everyone."];
-  openModal({title:"Did You Know?", desc:facts[Math.floor(Math.random()*facts.length)], url:"", type:"image"});
+  const f = facts[Math.floor(Math.random()*facts.length)];
+  document.getElementById('chat-body').innerHTML += `<div class="chat-bubble bot-msg">💡 <b>Did you know?</b> ${f}</div>`;
 }
 
 // --- UTILS ---
+function renderFooter(contacts) {
+  const f = document.getElementById('footer-target');
+  f.innerHTML = (contacts||[]).map(c => `<div class="footer-col"><h4>${c.title}</h4><p>${c.desc.replace(/\n/g,'<br>')}</p>${c.link?`<a href="${c.link}" target="_blank">Open Link</a>`:''}</div>`).join('');
+}
 function getSmartImg(url) {
   if(!url) return 'https://via.placeholder.com/150?text=No+Img';
   const m = url.match(/[-\w]{25,}/);
@@ -296,10 +359,6 @@ function getMediaHtml(url, type, auto) {
   }
   return `<img src="${getSmartImg(url)}" onclick="openImageViewer(this.src)" style="cursor:zoom-in">`;
 }
-function renderFooter(c) {
-  const f = document.getElementById('footer-target');
-  f.innerHTML = (c||[]).map(x => `<div class="footer-col"><h4>${x.title}</h4><p>${x.desc.replace(/\n/g,'<br>')}</p>${x.link?`<a href="${x.link}" target="_blank">Open Link</a>`:''}</div>`).join('');
-}
 function encodeData(o) { return JSON.stringify(o).replace(/'/g, "&apos;").replace(/"/g, "&quot;"); }
 function showToast(m) {
   const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000);
@@ -309,48 +368,32 @@ function showActionToast(m, b, cb) {
   t.innerHTML = `<span>${m}</span><button id="ta" class="toast-btn">${b}</button>`; t.classList.add('show');
   document.getElementById('ta').onclick = () => { t.classList.remove('show'); cb(); };
 }
-function renderAppBackup() { renderApp([{title:"Offline", desc:"Check connection.", type:"Image"}], []); }
-
-// Modals
-window.openModal = function(d) {
-  document.getElementById('m-title').innerText = d.title;
-  document.getElementById('m-desc').innerText = d.desc;
-  document.getElementById('m-media').innerHTML = getMediaHtml(d.url, d.type, true);
-  document.getElementById('m-ref-box').style.display = d.ref ? 'block' : 'none';
-  if(d.ref) document.getElementById('m-ref-content').innerHTML = d.ref.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="ref-link">$1</a>');
-  document.getElementById('modal').classList.add('active');
+function renderAppBackup() {
+  document.getElementById('app-content').innerHTML = `<div style="text-align:center; padding:4rem;"><h3>Offline</h3><p>Check connection.</p><button onclick="window.location.reload()" class="btn-details">Retry</button></div>`;
 }
-window.openProfile = function(d) {
-  document.getElementById('p-name').innerText = d.name;
-  document.getElementById('p-role').innerText = d.role + (d.program ? " | "+d.program : "");
-  document.getElementById('p-bio').innerText = d.fullBio || d.shortDesc;
-  document.getElementById('p-img').src = getSmartImg(d.imgUrl);
-  document.getElementById('p-fb').style.display = d.fbLink ? 'inline-block' : 'none';
-  if(d.fbLink) document.getElementById('p-fb').href = d.fbLink;
-  document.getElementById('profile-modal').classList.add('active');
-}
-document.querySelectorAll('.close-btn').forEach(b => b.onclick = function() {
-  this.closest('.modal').classList.remove('active');
-  setTimeout(() => document.getElementById('m-media').innerHTML = '', 300);
-});
-window.openImageViewer = function(s) { document.getElementById('v-img').src=s; document.getElementById('image-viewer').classList.add('active'); }
-window.closeImageViewer = function() { document.getElementById('image-viewer').classList.remove('active'); }
 
-// Theme
+// Theme & SW
 function initTheme() { document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')); }
 window.toggleTheme = function() {
   const n = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', n); localStorage.setItem('theme', n);
 }
-
-// SW & Install
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(reg => {
-  if(reg.waiting) showActionToast("Update available", "Update", () => reg.waiting.postMessage({type:'SKIP_WAITING'}));
+  if(reg.waiting) showUpdateToast(reg.waiting);
   reg.addEventListener('updatefound', () => {
     const n = reg.installing;
-    n.addEventListener('statechange', () => { if(n.state==='installed' && navigator.serviceWorker.controller) showActionToast("Update available", "Update", () => n.postMessage({type:'SKIP_WAITING'})); });
+    n.addEventListener('statechange', () => { if(n.state==='installed' && navigator.serviceWorker.controller) showUpdateToast(n); });
   });
-  let ref; navigator.serviceWorker.addEventListener('controllerchange', () => { if(!ref) { window.location.reload(); ref=true; } });
 });
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window.deferredPrompt = e; document.getElementById('install-btn').style.display = 'block'; });
-document.getElementById('install-btn').onclick = () => { document.getElementById('install-btn').style.display='none'; window.deferredPrompt.prompt(); };
+function showUpdateToast(w) { showActionToast("Update Available", "Update", () => w.postMessage({type:'SKIP_WAITING'})); }
+navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+
+// Install
+let deferredPrompt;
+const installBtn = document.getElementById('install-btn');
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'flex'; });
+installBtn.addEventListener('click', () => { installBtn.style.display='none'; deferredPrompt.prompt(); });
+
+// Viewers
+window.openImageViewer = function(s) { document.getElementById('v-img').src=s; document.getElementById('image-viewer').classList.add('active'); }
+window.closeImageViewer = function() { document.getElementById('image-viewer').classList.remove('active'); }
